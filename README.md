@@ -17,6 +17,10 @@ Just voice message your random thoughts, and Soul Mirror builds a living profile
 ```bash
 cd apps/backend
 
+# Setup environment
+cp .env.example .env
+# Add your ANTHROPIC_API_KEY to .env
+
 # Run server with hot reload
 ./scripts/dev.sh
 
@@ -37,6 +41,13 @@ cd apps/backend
 
 Core components:
 - **Orchestrator** - Main workflow coordinator
-- **LLMService** - Intelligent tool selection and text processing
+- **LLMService** - Anthropic Claude integration for intelligent tool selection
 - **ToolService** - Registry of available tools
 - **ProfileService** - Simple plain text user profile
+
+### Configuration
+
+Required environment variables:
+- `ANTHROPIC_API_KEY` - Your Anthropic API key
+- `PORT` - Server port (default: 8080)
+- `ENVIRONMENT` - deployment environment (default: development)

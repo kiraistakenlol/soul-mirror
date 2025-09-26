@@ -21,8 +21,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Contextual Intelligence**: Uses your calendar, location, and profile to provide relevant suggestions
 
 ## Current project stage:
-Stage 1 complete ✅ - Core architecture with mock implementations
-Ready for Stage 2 - Real LLM integration
+Stage 2 complete ✅ - Real LLM integration with Anthropic Claude
+Ready for Stage 3 - Enhanced tools & profile intelligence
 
 ## Project Rules
 
@@ -60,8 +60,9 @@ apps/backend
 - Handles multiple tool execution with error handling
 
 **LLM Service:**
-- Intelligent tool selection with reasoning
-- Returns multiple tools with explanations
+- Anthropic Claude integration for intelligent tool selection
+- Fallback logic when API unavailable
+- JSON-based tool selection with reasoning
 - Text processing capabilities
 
 **Tool Service:**
@@ -103,8 +104,10 @@ apps/backend/
 ├── cmd/server/          # Application entry point
 │   └── main.go
 ├── internal/            # Private packages
+│   ├── config/        # Configuration management
+│   │   └── config.go  # Environment variables + validation
 │   ├── llm/            # LLM Service
-│   │   ├── llm.go      # Interface + implementation
+│   │   ├── llm.go      # Anthropic Claude integration
 │   │   └── mock.go     # Mock implementation
 │   ├── orchestrator/   # Main coordinator
 │   │   ├── orchestrator.go
@@ -128,9 +131,11 @@ apps/backend/
 ```
 #### Tech Stack
 
-- go (1.22.2)
+- go (1.23.0)
 - air (hot reload)
 - standard library HTTP server
+- github.com/joho/godotenv (environment configuration)
+- Anthropic Claude API
 
 #### API Endpoints
 
@@ -169,4 +174,17 @@ ProcessInput(input string) error
 ./scripts/check-all.sh
 ./scripts/format.sh
 ./scripts/vet.sh
+```
+
+#### Configuration
+
+Environment variables:
+- `ANTHROPIC_API_KEY` - Required for LLM functionality
+- `PORT` - Server port (default: 8080)
+- `ENVIRONMENT` - Deployment environment (default: development)
+
+Setup:
+```bash
+cp .env.example .env
+# Add your ANTHROPIC_API_KEY to .env
 ```

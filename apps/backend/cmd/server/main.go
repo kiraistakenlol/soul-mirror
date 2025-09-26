@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/kirillsobolev/soul-mirror/backend/internal/config"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/llm"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/orchestrator"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/profile"
@@ -12,6 +13,14 @@ import (
 
 func main() {
 	log.Println("Initializing Soul Mirror backend...")
+
+	cfg := config.Load()
+	log.Printf("✓ Configuration loaded (environment: %s)", cfg.Environment)
+	if cfg.HasAnthropicKey() {
+		log.Println("✓ Anthropic API key found")
+	} else {
+		log.Println("⚠️  No Anthropic API key - running in fallback mode")
+	}
 
 	toolService := tools.NewToolService()
 	toolsList := toolService.ListTools()
@@ -23,13 +32,13 @@ func main() {
 	profileService := profile.NewService()
 	log.Println("✓ Profile service initialized")
 
-	llmService := llm.NewService()
+	llmService := llm.NewService(cfg)
 	log.Println("✓ LLM service initialized")
 
 	orch := orchestrator.New(toolService, profileService, llmService)
 	log.Println("✓ Orchestrator initialized")
 
-	srv := server.New(orch, profileService, "8080")
+	srv := server.New(orch, profileService, cfg.Port)
 	log.Println("✓ Server initialized")
 
 	log.Println("🚀 Starting Soul Mirror backend server...")
