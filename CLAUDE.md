@@ -32,47 +32,47 @@ MVP, see mvp.spec.md
 - keep it as simple as you can
 - follow DRY(don't repeat yourself principle) - always try to break complex compoents into smaller reusable parts with clear signatures
 - avoid redundancy
-- minimalism(no redundant descriptions, no obvious comments, no unnecessary formatting). examples: 
+- minimalism in code and docs (no redundant descriptions, no obvious comments, no unnecessary formatting) - but be expressive in logs and script output for clarity. examples: 
     - ✅ `go`
     - ❌ `**Go**: Backend development language`
-    - ✅ `./scripts/build.sh`
-    - ❌ `./scripts/build.sh   # Check compilation`
     - ✅ `type: string`
     - ❌ `type: string (enum)`
     - ✅ Simple variable names when context is clear
     - ❌ Long descriptive names that repeat context
+    - ✅ `echo "✓ Build successful"` in scripts (expressive for debugging)
+    - ✅ `fmt.Println("Server starting on :8080")` (helpful log)
 
 ## Modules
 
 ### Backend
 
 
-Monolith build with go and resides in apps/backend
+apps/backend
 
 #### System Architecture
 
 ##### High-Level Modules
 
 **Core Processing Pipeline:**
-- **Input Gateway**: Receives raw input from multiple sources (voice, text, integrations) → *Input: raw data from various sources* → *Output: normalized message format*
-- **Content Extractor** (Current MVP): Analyzes text and extracts structured insights → *Input: normalized text* → *Output: JSON with categorized content, emotions, entities*
-- **Decision Engine**: Determines appropriate actions based on extracted content and user profile → *Input: extracted content + user profile* → *Output: ordered list of actions to execute*
-- **Action Orchestrator**: Coordinates and executes actions in the correct sequence → *Input: action list* → *Output: execution results and confirmations*
+- Input Gateway
+- Content Extractor (MVP)
+- Decision Engine
+- Action Orchestrator
 
 **Knowledge & Profile:**
-- **Profile Builder**: Continuously updates user's personality profile from interactions → *Input: extracted insights* → *Output: updated user profile (traits, preferences, patterns)*
-- **Knowledge Base**: Stores and retrieves user's ideas, notes, goals, and historical data → *Input: categorized content* → *Output: stored items with relationships*
-- **Context Provider**: Supplies relevant context for decision-making → *Input: current situation query* → *Output: relevant profile data, history, and external context*
+- Profile Builder
+- Knowledge Base
+- Context Provider
 
 **Action Modules:**
-- **Note Manager**: Creates and organizes notes and thoughts → *Input: note content + metadata* → *Output: stored note with categorization*
-- **Task Scheduler**: Creates tasks, reminders, and calendar events → *Input: task details + timing* → *Output: scheduled item confirmation*
-- **Communication Handler**: Drafts and sends emails, messages → *Input: message content + recipient* → *Output: sent confirmation*
-- **Idea Collector**: Manages business ideas and creative thoughts → *Input: idea content + category* → *Output: stored idea with tags*
+- Note Manager
+- Task Scheduler
+- Communication Handler
+- Idea Collector
 
 **Integration Layer:**
-- **Channel Adapters**: Connects with WhatsApp, Telegram, email, calendar APIs → *Input: external service events* → *Output: normalized messages to Input Gateway*
-- **Response Router**: Sends responses back through appropriate channels → *Input: response content + destination* → *Output: delivered message*
+- Channel Adapters
+- Response Router
 
 ##### System Flow Diagram
 
@@ -85,27 +85,22 @@ Monolith build with go and resides in apps/backend
               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                      Input Gateway                          │
-│                 (Normalizes all inputs)                     │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                   Content Extractor (MVP)                   │
-│        (Extracts insights, emotions, categories)            │
 └─────────────┬───────────────────────┬───────────────────────┘
               │                       │
               ▼                       ▼
 ┌──────────────────────┐    ┌────────────────────────────────┐
-│   Profile Builder    │    │      Decision Engine           │
-│  (Updates user       │◄───│   (Determines actions based    │
-│   profile over time) │    │    on content + profile)       │
+│   Profile Builder    │◄───│      Decision Engine           │
 └──────────────────────┘    └────────────┬───────────────────┘
                                          │
               ┌──────────────────────────┼──────────────────┐
               │                          ▼                  │
               │            ┌──────────────────────┐         │
               │            │  Action Orchestrator │         │
-              │            │  (Executes actions)  │         │
               │            └──────────┬───────────┘         │
               │                       │                     │
               ▼                       ▼                     ▼
@@ -117,15 +112,13 @@ Monolith build with go and resides in apps/backend
               ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                    Knowledge Base                            │
-│         (Central storage for all user data)                  │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Multi-module System:**
-- **Core Engine**: Content extraction and profile building (Go/PostgreSQL/OpenAI)
-- **Admin Interface**: View insights, manage categories, adjust settings
-- **Frontend**: Mobile-first interface for quick input and profile viewing
-- **Integration Layer**: Connects with WhatsApp, Telegram, calendar, email
+- Core Engine
+- Admin Interface
+- Frontend
+- Integration Layer
 
 #### Directory structure
 // TODO

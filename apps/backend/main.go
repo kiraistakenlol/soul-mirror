@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Soul Mirror Backend Starting...")
+	fmt.Println("Starting...")
 	
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

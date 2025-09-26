@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Content Extractor module is the MVP for Soul Mirror. It takes raw text input (typically from voice-to-text conversion) and returns structured JSON with extracted insights about personality, actionable items, goals, emotions, and categories.
+Takes text input and returns structured JSON with extracted insights.
 
 ## API Endpoint
 
@@ -12,7 +12,7 @@ The Content Extractor module is the MVP for Soul Mirror. It takes raw text input
 
 ```json
 {
-  "text": "Raw text from voice-to-text conversion"
+  "text": "string"
 }
 ```
 
@@ -62,42 +62,38 @@ The Content Extractor module is the MVP for Soul Mirror. It takes raw text input
 ## Field Descriptions
 
 ### content_type
-- **Type**: `string` (enum)
-- **Values**: `self-reflection`, `idea`, `task`, `goal`, `todo-list`, `thought`
-- **Description**: Primary classification of the input content
+`self-reflection|idea|task|goal|todo-list|thought`
 
 ### personality_insights
-- **traits**: Character traits revealed in the text
-- **interests**: Topics or activities the person shows interest in
-- **values**: Core values or principles expressed
-- **location_mentions**: Geographic locations mentioned
-- **self_improvement_areas**: Areas where the person wants to improve
+- traits
+- interests
+- values
+- location_mentions
+- self_improvement_areas
 
 ### actionable_items
-Array of items that require action:
-- **type**: `reminder`, `todo`, `task`
-- **content**: The actual action item
-- **context**: When/where this applies (optional)
-- **priority**: `low`, `medium`, `high` (optional)
-- **deadline**: ISO date format (optional)
+- type: `reminder|todo|task`
+- content
+- context (optional)
+- priority: `low|medium|high` (optional)
+- deadline (optional)
 
 ### goals
-Array of identified goals:
-- **type**: `short-term`, `long-term`
-- **content**: Description of the goal
-- **deadline**: Target completion date
-- **progress_indicator**: Current progress (if mentioned)
+- type: `short-term|long-term`
+- content
+- deadline
+- progress_indicator
 
 ### emotional_state
-- **mood**: Current emotional state (`reflective`, `excited`, `anxious`, etc.)
-- **sentiment**: `positive`, `neutral`, `negative`
-- **energy**: `low`, `medium`, `high`
+- mood
+- sentiment: `positive|neutral|negative`
+- energy: `low|medium|high`
 
 ### categories
-Array of relevant topic categories the content belongs to
+Topic categories
 
 ### confidence
-Float between 0-1 indicating the extraction confidence level
+0-1
 
 ## Example Use Cases
 
