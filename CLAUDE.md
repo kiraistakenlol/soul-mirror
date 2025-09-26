@@ -51,74 +51,34 @@ apps/backend
 
 #### System Architecture
 
-##### High-Level Modules
+##### High-Level Components
 
-**Core Processing Pipeline:**
-- Input Gateway
-- Content Extractor (MVP)
-- Decision Engine
-- Action Orchestrator
+**LLM Orchestrator:**
+- Routes user input to appropriate tools
+- Uses LLM to understand intent and context
 
-**Knowledge & Profile:**
-- Profile Builder
-- Knowledge Base
-- Context Provider
+**Tool Registry:**
+- Extensible collection of specialized services
+- Each tool handles specific user needs
 
-**Action Modules:**
-- Note Manager
-- Task Scheduler
-- Communication Handler
-- Idea Collector
+**User Profile:**
+- Living JSON that grows organically
+- Stores personality, context, learning, goals
 
-**Integration Layer:**
-- Channel Adapters
-- Response Router
-
-##### System Flow Diagram
+##### System Flow
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     External Sources                        │
-│  [WhatsApp]  [Telegram]  [Email]  [Voice]  [Calendar]      │
-└─────────────┬───────────────────────────────────────────────┘
-              │
-              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      Input Gateway                          │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Content Extractor (MVP)                   │
-└─────────────┬───────────────────────┬───────────────────────┘
-              │                       │
-              ▼                       ▼
-┌──────────────────────┐    ┌────────────────────────────────┐
-│   Profile Builder    │◄───│      Decision Engine           │
-└──────────────────────┘    └────────────┬───────────────────┘
-                                         │
-              ┌──────────────────────────┼──────────────────┐
-              │                          ▼                  │
-              │            ┌──────────────────────┐         │
-              │            │  Action Orchestrator │         │
-              │            └──────────┬───────────┘         │
-              │                       │                     │
-              ▼                       ▼                     ▼
-┌──────────────────────────────────────────────────────────────┐
-│                     Action Modules                           │
-│  [Note Manager] [Task Scheduler] [Communication] [Ideas]     │
-└──────────────────────────────────────────────────────────────┘
-              │
-              ▼
-┌──────────────────────────────────────────────────────────────┐
-│                    Knowledge Base                            │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User Input    │───▶│ LLM Orchestrator│───▶│  Tool Registry  │
+│  (free text)    │    │                 │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────┬───────┘
+                                ▲                       │
+                                │                       ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │  User Profile   │◄───│ Selected Tools  │
+                       │   (JSON)        │    │                 │
+                       └─────────────────┘    └─────────────────┘
 ```
-
-- Core Engine
-- Admin Interface
-- Frontend
-- Integration Layer
 
 #### Directory structure
 // TODO

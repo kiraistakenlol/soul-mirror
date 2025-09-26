@@ -8,7 +8,7 @@ Takes text input and returns structured JSON with extracted insights.
 
 **POST** `/api/extract`
 
-## Input Format
+## Input **Format**
 
 ```json
 {
@@ -92,8 +92,6 @@ Takes text input and returns structured JSON with extracted insights.
 ### categories
 Topic categories
 
-### confidence
-0-1
 
 ## Example Use Cases
 

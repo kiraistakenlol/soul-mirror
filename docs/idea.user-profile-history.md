@@ -1,0 +1,1 @@
+i want to see how usr's profile changes and why...so we need profile_history entity that will store prev, current versions and user's input that updated the profule and expanation from LLM
