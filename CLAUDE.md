@@ -20,8 +20,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Idea Management**: Captures and organizes your creative thoughts for later action
 - **Contextual Intelligence**: Uses your calendar, location, and profile to provide relevant suggestions
 
-## Curent project stage:
-MVP, see mvp.spec.md
+## Current project stage:
+Stage 1 complete ✅ - Core architecture with mock implementations
+Ready for Stage 2 - Real LLM integration
 
 ## Project Rules
 
@@ -54,38 +55,112 @@ apps/backend
 ##### High-Level Components
 
 **LLM Orchestrator:**
-- Routes user input to appropriate tools
-- Uses LLM to understand intent and context
+- Coordinates workflow between all services
+- Processes user input and returns combined responses
+- Handles multiple tool execution with error handling
 
-**Tool Registry:**
-- Extensible collection of specialized services
-- Each tool handles specific user needs
+**LLM Service:**
+- Intelligent tool selection with reasoning
+- Returns multiple tools with explanations
+- Text processing capabilities
 
-**User Profile:**
-- Living JSON that grows organically
-- Stores personality, context, learning, goals
+**Tool Service:**
+- Registry of available tools (echo, etc.)
+- Each tool has name, description, and execute method
+- Extensible for adding new capabilities
+
+**Profile Service:**
+- Simple plain text profile storage
+- Automatically learns from user input
+- Single-user MVP design
 
 ##### System Flow
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Input    │───▶│ LLM Orchestrator│───▶│  Tool Registry  │
-│  (free text)    │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────┬───────┘
-                                ▲                       │
-                                │                       ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │  User Profile   │◄───│ Selected Tools  │
-                       │   (JSON)        │    │                 │
-                       └─────────────────┘    └─────────────────┘
+┌─────────────────┐
+│   User Input    │
+│  (free text)    │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ LLM Orchestrator│
+└────────┬────────┘
+         │
+   ┌─────┼─────┬─────┐
+   │     │     │     │
+   ▼     ▼     ▼     ▼
+┌─────┐ ┌───────┐ ┌─────┐
+│ LLM │ │ Tool  │ │Profile│
+│Service│ │Service│ │Service│
+└─────┘ └───────┘ └─────┘
 ```
 
-#### Directory structure
-// TODO
+#### Directory Structure
+
+```
+apps/backend/
+├── cmd/server/          # Application entry point
+│   └── main.go
+├── internal/            # Private packages
+│   ├── llm/            # LLM Service
+│   │   ├── llm.go      # Interface + implementation
+│   │   └── mock.go     # Mock implementation
+│   ├── orchestrator/   # Main coordinator
+│   │   ├── orchestrator.go
+│   │   └── mock.go
+│   ├── tools/          # Tool Service
+│   │   ├── registry.go # Interface + tools
+│   │   └── mock.go
+│   ├── profile/        # Profile Service
+│   │   ├── profile.go  # Plain text profile
+│   │   └── mock.go
+│   └── server/         # HTTP server
+│       ├── server.go
+│       └── handlers.go
+└── scripts/
+    ├── build.sh
+    ├── check-all.sh
+    ├── check-format.sh
+    ├── dev.sh
+    ├── format.sh
+    └── vet.sh
+```
 #### Tech Stack
 
-- go
+- go (1.22.2)
 - air (hot reload)
+- standard library HTTP server
+
+#### API Endpoints
+
+- `GET /health` - Health check
+- `GET /process?input=text` - Process user input
+- `GET /profile` - Get current profile
+
+#### Key Interfaces
+
+**LLMService:**
+```go
+type ToolSelection struct {
+    ToolName string
+    Reason   string
+}
+
+SelectTools(input string, tools []ToolDescriptor) ([]ToolSelection, error)
+```
+
+**ToolService:**
+```go
+ListTools() []Tool
+GetTool(name string) Tool
+```
+
+**ProfileService:**
+```go
+Get() (string, error)
+ProcessInput(input string) error
+```
 
 #### Development Commands
 
