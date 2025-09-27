@@ -58,7 +58,7 @@ apps/backend
 - Handles multiple tool execution with error handling
 
 **LLM Service:**
-- Anthropic Claude Haiku integration for fast tool selection
+- Configurable LLM provider (Anthropic Claude Haiku or OpenAI GPT-4.1-nano)
 - JSON-based tool selection with reasoning
 - Text processing capabilities
 
@@ -142,7 +142,7 @@ apps/backend/
 - gin (HTTP framework)
 - slog (structured logging)
 - github.com/joho/godotenv (environment configuration)
-- Anthropic Claude Haiku API
+- Anthropic Claude Haiku API / OpenAI GPT-4.1-nano API
 
 #### API Endpoints
 
@@ -201,12 +201,14 @@ ProcessInput(input string) (*ProcessResponse, error)
 #### Configuration
 
 Environment variables:
-- `ANTHROPIC_API_KEY` - Required for LLM functionality
+- `LLM_PROVIDER` - Choose LLM provider: "anthropic" or "openai" (default: anthropic)
+- `ANTHROPIC_API_KEY` - Required when LLM_PROVIDER=anthropic
+- `OPENAI_API_KEY` - Required when LLM_PROVIDER=openai
 - `PORT` - Server port (default: 8080)
 - `ENVIRONMENT` - Deployment environment (default: development)
 
 Setup:
 ```bash
 cp .env.example .env
-# Add your ANTHROPIC_API_KEY to .env
+# Set LLM_PROVIDER and add corresponding API key
 ```

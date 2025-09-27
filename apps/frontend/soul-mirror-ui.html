@@ -403,10 +403,6 @@
                     <span id="tools-count">-</span>
                     <span>Tools</span>
                 </div>
-                <div class="status-item">
-                    <span>🤖</span>
-                    <span>Claude</span>
-                </div>
             </div>
         </header>
 
@@ -424,7 +420,7 @@
             <div class="input-controls">
                 <button id="process-btn" class="process-btn" onclick="processInput()">
                     <span>Process</span>
-                    <span style="font-size: 12px;">Ctrl+↵</span>
+                    <span style="font-size: 12px;">↵</span>
                 </button>
             </div>
         </div>
@@ -485,7 +481,7 @@
 
         // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'Enter') {
+            if (e.key === 'Enter') {
                 processInput();
             } else if (e.key === 'Escape') {
                 document.getElementById('user-input').value = '';
