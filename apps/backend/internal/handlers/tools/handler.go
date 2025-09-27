@@ -1,4 +1,4 @@
-package handlers
+package tools
 
 import (
 	"log/slog"
@@ -8,19 +8,19 @@ import (
 	"github.com/kirillsobolev/soul-mirror/backend/internal/tools"
 )
 
-type ToolsHandler struct {
+type Handler struct {
 	toolService tools.ToolService
 	logger      *slog.Logger
 }
 
-func NewToolsHandler(toolSvc tools.ToolService, logger *slog.Logger) *ToolsHandler {
-	return &ToolsHandler{
+func NewHandler(toolSvc tools.ToolService, logger *slog.Logger) *Handler {
+	return &Handler{
 		toolService: toolSvc,
 		logger:      logger,
 	}
 }
 
-func (h *ToolsHandler) Handle(c *gin.Context) {
+func (h *Handler) Handle(c *gin.Context) {
 	h.logger.Debug("Tools list requested")
 	
 	toolsList := h.toolService.ListTools()
@@ -33,7 +33,7 @@ func (h *ToolsHandler) Handle(c *gin.Context) {
 		}
 	}
 
-	response := ToolsResponse{
+	response := Response{
 		Tools: toolInfos,
 		Count: len(toolInfos),
 	}

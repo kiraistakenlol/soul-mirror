@@ -1,4 +1,4 @@
-package handlers
+package status
 
 import (
 	"log/slog"
@@ -8,26 +8,26 @@ import (
 	"github.com/kirillsobolev/soul-mirror/backend/internal/tools"
 )
 
-type StatusHandler struct {
+type Handler struct {
 	toolService tools.ToolService
 	logger      *slog.Logger
 	environment string
 }
 
-func NewStatusHandler(toolSvc tools.ToolService, logger *slog.Logger, environment string) *StatusHandler {
-	return &StatusHandler{
+func NewHandler(toolSvc tools.ToolService, logger *slog.Logger, environment string) *Handler {
+	return &Handler{
 		toolService: toolSvc,
 		logger:      logger,
 		environment: environment,
 	}
 }
 
-func (h *StatusHandler) Handle(c *gin.Context) {
+func (h *Handler) Handle(c *gin.Context) {
 	h.logger.Debug("Status check requested")
-	
+
 	toolsCount := len(h.toolService.ListTools())
-	
-	response := StatusResponse{
+
+	response := ServerStatusResponse{
 		Status:       "healthy",
 		LLMAvailable: true, // TODO: implement actual LLM health check
 		Environment:  h.environment,
@@ -35,9 +35,9 @@ func (h *StatusHandler) Handle(c *gin.Context) {
 		Version:      "stage-3",
 	}
 
-	h.logger.Info("Status check completed", 
+	h.logger.Info("Status check completed",
 		slog.String("status", response.Status),
 		slog.Int("tools_count", toolsCount))
-	
+
 	c.JSON(http.StatusOK, response)
 }

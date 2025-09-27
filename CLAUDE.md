@@ -63,8 +63,9 @@ apps/backend
 - Text processing capabilities
 
 **Tool Service:**
-- Registry of available tools (echo, etc.)
-- Each tool has name, description, and execute method
+- Registry of available tools (time, random, etc.)
+- Each tool has name, description, and execute method with context
+- Tools receive user profile as context for personalized responses
 - Extensible for adding new capabilities
 
 **Profile Service:**
@@ -104,23 +105,28 @@ apps/backend/
 │   ├── api/
 │   ├── config/
 │   │   └── config.go
+│   ├── handlers/
+│   │   ├── process/
+│   │   ├── profile/
+│   │   ├── status/
+│   │   └── tools/
 │   ├── llm/
 │   │   ├── llm.go
-│   │   └── mock.go
+│   │   └── types.go
 │   ├── logging/
 │   ├── orchestrator/
 │   │   ├── orchestrator.go
-│   │   └── mock.go
+│   │   └── types.go
 │   ├── tools/
 │   │   ├── registry.go
+│   │   ├── context.go
 │   │   ├── time.go
-│   │   └── mock.go
+│   │   └── random.go
 │   ├── profile/
 │   │   ├── profile.go
 │   │   └── mock.go
-│   ├── server/
-│   │   └── server.go
-│   └── types/
+│   └── server/
+│       └── server.go
 └── scripts/
     ├── build.sh
     ├── check-all.sh
@@ -165,6 +171,13 @@ ListTools() []Tool
 GetTool(name string) Tool
 ```
 
+**Tool:**
+```go
+Execute(input string, context Context) (string, error)
+Name() string
+Description() string
+```
+
 **ProfileService:**
 ```go
 Get() (string, error)
@@ -173,7 +186,7 @@ ProcessInput(input string) error
 
 **Orchestrator:**
 ```go
-ProcessInput(input string) (*types.ProcessResponse, error)
+ProcessInput(input string) (*ProcessResponse, error)
 ```
 
 #### Development Commands

@@ -6,14 +6,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/kirillsobolev/soul-mirror/backend/internal/types"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/llm"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/profile"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/tools"
 )
 
 type Orchestrator interface {
-	ProcessInput(input string) (*types.ProcessResponse, error)
+	ProcessInput(input string) (*ProcessResponse, error)
 }
 
 type orchestrator struct {
@@ -30,7 +29,7 @@ func New(toolService tools.ToolService, profileService profile.ProfileService, l
 	}
 }
 
-func (o *orchestrator) ProcessInput(input string) (*types.ProcessResponse, error) {
+func (o *orchestrator) ProcessInput(input string) (*ProcessResponse, error) {
 	startTime := time.Now()
 	log.Printf("Orchestrator: Processing input: %s", input)
 
@@ -50,16 +49,16 @@ func (o *orchestrator) ProcessInput(input string) (*types.ProcessResponse, error
 		return nil, fmt.Errorf("tool selection failed: %w", err)
 	}
 
-	apiToolSelections := make([]types.ToolSelection, len(toolSelections))
+	apiToolSelections := make([]llm.ToolSelection, len(toolSelections))
 	for i, sel := range toolSelections {
-		apiToolSelections[i] = types.ToolSelection{
+		apiToolSelections[i] = llm.ToolSelection{
 			ToolName: sel.ToolName,
 			Reason:   sel.Reason,
 		}
 	}
 
 	var combinedResponse string
-	var toolExecutions []types.ToolExecution
+	var toolExecutions []ToolExecution
 
 	if len(toolSelections) == 0 {
 		log.Printf("Orchestrator: No tools needed - processing as reflection")
@@ -73,7 +72,7 @@ func (o *orchestrator) ProcessInput(input string) (*types.ProcessResponse, error
 			tool := o.toolService.GetTool(selection.ToolName)
 			if tool == nil {
 				log.Printf("Warning: Tool '%s' not found, skipping", selection.ToolName)
-				toolExecutions = append(toolExecutions, types.ToolExecution{
+				toolExecutions = append(toolExecutions, ToolExecution{
 					ToolName:      selection.ToolName,
 					Input:         input,
 					Output:        "",
@@ -84,12 +83,18 @@ func (o *orchestrator) ProcessInput(input string) (*types.ProcessResponse, error
 				continue
 			}
 			
-			toolResponse, err := tool.Execute(input)
+			// Get current profile to provide as context
+			profile := o.getProfileSafely()
+			context := tools.Context{
+				Profile: profile,
+			}
+			
+			toolResponse, err := tool.Execute(input, context)
 			toolDuration := time.Since(toolStart)
 			
 			if err != nil {
 				log.Printf("Warning: Tool '%s' execution failed: %v", selection.ToolName, err)
-				toolExecutions = append(toolExecutions, types.ToolExecution{
+				toolExecutions = append(toolExecutions, ToolExecution{
 					ToolName:      selection.ToolName,
 					Input:         input,
 					Output:        "",
@@ -100,7 +105,7 @@ func (o *orchestrator) ProcessInput(input string) (*types.ProcessResponse, error
 				continue
 			}
 			
-			toolExecutions = append(toolExecutions, types.ToolExecution{
+			toolExecutions = append(toolExecutions, ToolExecution{
 				ToolName:      selection.ToolName,
 				Input:         input,
 				Output:        toolResponse,
@@ -136,19 +141,19 @@ func (o *orchestrator) ProcessInput(input string) (*types.ProcessResponse, error
 	totalDuration := time.Since(startTime)
 	log.Printf("Orchestrator: Generated response: %s", combinedResponse)
 
-	response := &types.ProcessResponse{
+	response := &ProcessResponse{
 		Input: input,
-		Result: types.ProcessResult{
+		Result: ProcessResult{
 			FinalResponse: combinedResponse,
-			ProcessingDetails: types.ProcessingDetails{
-				LLMAnalysis: types.LLMAnalysisResult{
+			ProcessingDetails: ProcessingDetails{
+				LLMAnalysis: LLMAnalysisResult{
 					ToolsConsidered: len(toolDescriptors),
 					ToolsSelected:   apiToolSelections,
 					ProcessingTime:  llmDuration.String(),
 					UsedFallback:    false, // TODO: detect actual fallback usage
 				},
 				ToolExecutions: toolExecutions,
-				ProfileUpdate: types.ProfileUpdate{
+				ProfileUpdate: ProfileUpdate{
 					ChangesMade:         "Added user input to profile",
 					ProfileLengthBefore: profileLengthBefore,
 					ProfileLengthAfter:  profileLengthAfter,
@@ -156,7 +161,7 @@ func (o *orchestrator) ProcessInput(input string) (*types.ProcessResponse, error
 					Success:             profileSuccess,
 				},
 			},
-			Metadata: types.ProcessMetadata{
+			Metadata: ProcessMetadata{
 				TotalProcessingTime: totalDuration.String(),
 				Timestamp:           time.Now(),
 				ToolsExecuted:       len(toolExecutions),

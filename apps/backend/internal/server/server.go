@@ -6,17 +6,20 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/kirillsobolev/soul-mirror/backend/internal/handlers"
+	"github.com/kirillsobolev/soul-mirror/backend/internal/handlers/process"
+	"github.com/kirillsobolev/soul-mirror/backend/internal/handlers/profile"
+	"github.com/kirillsobolev/soul-mirror/backend/internal/handlers/status"
+	"github.com/kirillsobolev/soul-mirror/backend/internal/handlers/tools"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/orchestrator"
 	profileService "github.com/kirillsobolev/soul-mirror/backend/internal/profile"
 	toolsService "github.com/kirillsobolev/soul-mirror/backend/internal/tools"
 )
 
 type Server struct {
-	processHandler *handlers.ProcessHandler
-	profileHandler *handlers.ProfileHandler
-	toolsHandler   *handlers.ToolsHandler
-	statusHandler  *handlers.StatusHandler
+	processHandler *process.Handler
+	profileHandler *profile.Handler
+	toolsHandler   *tools.Handler
+	statusHandler  *status.Handler
 	port           string
 	logger         *slog.Logger
 	router         *gin.Engine
@@ -36,10 +39,10 @@ func New(orch orchestrator.Orchestrator, profileSvc profileService.ProfileServic
 	router.Use(cors.New(config))
 
 	return &Server{
-		processHandler: handlers.NewProcessHandler(orch, logger),
-		profileHandler: handlers.NewProfileHandler(profileSvc, logger),
-		toolsHandler:   handlers.NewToolsHandler(toolSvc, logger),
-		statusHandler:  handlers.NewStatusHandler(toolSvc, logger, environment),
+		processHandler: process.NewHandler(orch, logger),
+		profileHandler: profile.NewHandler(profileSvc, logger),
+		toolsHandler:   tools.NewHandler(toolSvc, logger),
+		statusHandler:  status.NewHandler(toolSvc, logger, environment),
 		port:           port,
 		logger:         logger,
 		router:         router,

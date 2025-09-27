@@ -16,7 +16,7 @@ go.work
 
 # Environment variables
 .env
-
+apps/backend/tmp
 # Database
 *.db
 *.sqlite
@@ -37,3 +37,5 @@ go.work
 .Trashes
 ehthumbs.db
 Thumbs.db
+apps/backend/tmp/main
+apps/backend/tmp/main

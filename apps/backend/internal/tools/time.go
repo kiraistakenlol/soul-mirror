@@ -20,7 +20,7 @@ func (t *timeTool) Description() string {
 	return "Returns the current date and time. Useful when user asks about time, scheduling, or needs temporal context."
 }
 
-func (t *timeTool) Execute(input string) (string, error) {
+func (t *timeTool) Execute(input string, context Context) (string, error) {
 	now := time.Now()
 	
 	// Format time in a human-readable way

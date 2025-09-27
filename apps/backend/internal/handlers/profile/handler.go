@@ -1,4 +1,4 @@
-package handlers
+package profile
 
 import (
 	"log/slog"
@@ -8,19 +8,19 @@ import (
 	"github.com/kirillsobolev/soul-mirror/backend/internal/profile"
 )
 
-type ProfileHandler struct {
+type Handler struct {
 	profileService profile.ProfileService
 	logger         *slog.Logger
 }
 
-func NewProfileHandler(profileSvc profile.ProfileService, logger *slog.Logger) *ProfileHandler {
-	return &ProfileHandler{
+func NewHandler(profileSvc profile.ProfileService, logger *slog.Logger) *Handler {
+	return &Handler{
 		profileService: profileSvc,
 		logger:         logger,
 	}
 }
 
-func (h *ProfileHandler) Handle(c *gin.Context) {
+func (h *Handler) Handle(c *gin.Context) {
 	h.logger.Debug("Profile requested")
 	
 	profile, err := h.profileService.Get()
@@ -30,7 +30,7 @@ func (h *ProfileHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	response := ProfileResponse{Profile: profile}
+	response := Response{Profile: profile}
 	h.logger.Debug("Profile retrieved", slog.Int("profile_length", len(profile)))
 	c.JSON(http.StatusOK, response)
 }

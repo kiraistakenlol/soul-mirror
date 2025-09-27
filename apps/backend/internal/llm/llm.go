@@ -13,15 +13,6 @@ import (
 	"github.com/kirillsobolev/soul-mirror/backend/internal/config"
 )
 
-type ToolDescriptor struct {
-	Name        string
-	Description string
-}
-
-type ToolSelection struct {
-	ToolName string
-	Reason   string
-}
 
 type LLMService interface {
 	SelectTools(userInput string, availableTools []ToolDescriptor) ([]ToolSelection, error)

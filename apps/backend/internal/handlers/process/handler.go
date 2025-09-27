@@ -1,5 +1,4 @@
-// handlers provides HTTP handlers for the Soul Mirror API
-package handlers
+package process
 
 import (
 	"log/slog"
@@ -10,19 +9,19 @@ import (
 	"github.com/kirillsobolev/soul-mirror/backend/internal/orchestrator"
 )
 
-type ProcessHandler struct {
+type Handler struct {
 	orchestrator orchestrator.Orchestrator
 	logger       *slog.Logger
 }
 
-func NewProcessHandler(orch orchestrator.Orchestrator, logger *slog.Logger) *ProcessHandler {
-	return &ProcessHandler{
+func NewHandler(orch orchestrator.Orchestrator, logger *slog.Logger) *Handler {
+	return &Handler{
 		orchestrator: orch,
 		logger:       logger,
 	}
 }
 
-func (h *ProcessHandler) Handle(c *gin.Context) {
+func (h *Handler) Handle(c *gin.Context) {
 	startTime := time.Now()
 	input := c.Query("input")
 	

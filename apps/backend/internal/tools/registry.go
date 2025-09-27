@@ -6,7 +6,7 @@ import (
 )
 
 type Tool interface {
-	Execute(input string) (string, error)
+	Execute(input string, context Context) (string, error)
 	Name() string
 	Description() string
 }

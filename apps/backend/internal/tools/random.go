@@ -20,7 +20,7 @@ func (t *randomTool) Description() string {
 	return "Generates random numbers, useful for decision making, picking options, or games"
 }
 
-func (t *randomTool) Execute(input string) (string, error) {
+func (t *randomTool) Execute(input string, context Context) (string, error) {
 	// Generate different types of random values
 	randomInt := rand.Intn(100) + 1  // 1-100
 	randomFloat := rand.Float64()    // 0.0-1.0

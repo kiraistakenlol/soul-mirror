@@ -1,7 +1,10 @@
-// types defines shared data structures used across the application for API responses and internal communication.
-package types
+package orchestrator
 
-import "time"
+import (
+	"time"
+
+	"github.com/kirillsobolev/soul-mirror/backend/internal/llm"
+)
 
 type ProcessResponse struct {
 	Input  string        `json:"input"`
@@ -21,15 +24,10 @@ type ProcessingDetails struct {
 }
 
 type LLMAnalysisResult struct {
-	ToolsConsidered int             `json:"tools_considered"`
-	ToolsSelected   []ToolSelection `json:"tools_selected"`
-	ProcessingTime  string          `json:"processing_time"`
-	UsedFallback    bool            `json:"used_fallback"`
-}
-
-type ToolSelection struct {
-	ToolName string `json:"tool_name"`
-	Reason   string `json:"reason"`
+	ToolsConsidered int                 `json:"tools_considered"`
+	ToolsSelected   []llm.ToolSelection `json:"tools_selected"`
+	ProcessingTime  string              `json:"processing_time"`
+	UsedFallback    bool                `json:"used_fallback"`
 }
 
 type ToolExecution struct {
@@ -55,22 +53,4 @@ type ProcessMetadata struct {
 	ToolsExecuted       int       `json:"tools_executed"`
 	LLMCallsMade        int       `json:"llm_calls_made"`
 	Environment         string    `json:"environment"`
-}
-
-type ToolsResponse struct {
-	Tools []ToolInfo `json:"tools"`
-	Count int        `json:"count"`
-}
-
-type ToolInfo struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-type StatusResponse struct {
-	Status       string `json:"status"`
-	LLMAvailable bool   `json:"llm_available"`
-	Environment  string `json:"environment"`
-	ToolsCount   int    `json:"tools_count"`
-	Version      string `json:"version"`
 }
