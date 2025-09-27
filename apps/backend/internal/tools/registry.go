@@ -27,6 +27,7 @@ func NewToolService() ToolService {
 	}
 	
 	s.RegisterTool(&EchoTool{})
+	s.RegisterTool(NewTimeTool())
 	return s
 }
 

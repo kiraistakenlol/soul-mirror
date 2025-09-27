@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soul Mirror</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #2d2d30;
+            --bg-tertiary: #383838;
+            --text-primary: #cccccc;
+            --text-secondary: #999999;
+            --accent-blue: #007acc;
+            --accent-green: #4ec9b0;
+            --accent-yellow: #ffcc02;
+            --accent-red: #f14c4c;
+            --shadow: 0 2px 8px rgba(0,0,0,0.15);
+            --border: 1px solid #444444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .status-indicators {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 12px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+        }
+
+        .input-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .input-label {
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-area {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: var(--border);
+            border-radius: 6px;
+            padding: 15px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            resize: none;
+            min-height: 60px;
+            max-height: 200px;
+            overflow-y: auto;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-area:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .input-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            background: var(--bg-tertiary);
+            border: var(--border);
+            border-radius: 4px;
+            padding: 5px 10px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-action:hover {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .process-btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .process-btn:hover {
+            background: #005999;
+        }
+
+        .process-btn:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .results-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--bg-tertiary);
+            border-top: 2px solid var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .response {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .collapsible {
+            background: var(--bg-tertiary);
+            border: var(--border);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+            transition: background 0.2s ease;
+        }
+
+        .collapsible-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.active {
+            max-height: 500px;
+        }
+
+        .collapsible-inner {
+            padding: 15px;
+        }
+
+        .detail-item {
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-item {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .tool-name {
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 5px;
+        }
+
+        .tool-description {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .tool-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .profile-content {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .performance-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .expand-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .expand-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .input-controls {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <span>🧠</span>
+                <span>Soul Mirror</span>
+            </div>
+            <div class="status-indicators">
+                <div class="status-item">
+                    <div class="status-dot" id="connection-status"></div>
+                    <span id="connection-text">Connected</span>
+                </div>
+                <div class="status-item">
+                    <span>⚡</span>
+                    <span id="tools-count">-</span>
+                    <span>Tools</span>
+                </div>
+                <div class="status-item">
+                    <span>🤖</span>
+                    <span>Claude</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="input-section">
+            <div class="input-label">
+                <span>💭</span>
+                <span>What's on your mind?</span>
+            </div>
+            <textarea 
+                id="user-input" 
+                class="input-area" 
+                placeholder="I want to learn guitar and improve my focus..."
+                autofocus
+            ></textarea>
+            <div class="input-controls">
+                <div class="quick-actions">
+                    <button class="quick-action" onclick="setInput('feeling overwhelmed')">feeling overwhelmed</button>
+                    <button class="quick-action" onclick="setInput('had an idea')">had an idea</button>
+                    <button class="quick-action" onclick="setInput('want to learn')">want to learn</button>
+                </div>
+                <button id="process-btn" class="process-btn" onclick="processInput()">
+                    <span>Process</span>
+                    <span style="font-size: 12px;">Ctrl+↵</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div class="results-header">
+                <div class="results-title">📊 Results</div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <span>Processing...</span>
+                </div>
+            </div>
+            
+            <div id="response-container" style="display: none;">
+                <div class="response" id="main-response">
+                    <!-- Response will be inserted here -->
+                </div>
+                
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span>📊 Processing Details</span>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner" id="processing-details">
+                            <!-- Processing details will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="two-column">
+            <div class="card">
+                <div class="card-title">
+                    <span>🔧</span>
+                    <span>Available Tools (<span id="tools-count-detailed">-</span>)</span>
+                </div>
+                <div id="tools-list">
+                    <!-- Tools will be loaded here -->
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>📝</span>
+                    <span>Current Profile</span>
+                </div>
+                <div class="profile-content" id="profile-content">
+                    Loading profile...
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <span>📈</span>
+                <span>Performance</span>
+            </div>
+            <div class="performance-stats" id="performance-stats">
+                <div class="stat-item">
+                    <span>📈</span>
+                    <span>Avg Response: <span id="avg-response">-</span></span>
+                </div>
+                <div class="stat-item">
+                    <span>🧠</span>
+                    <span>LLM Calls: <span id="llm-calls">-</span></span>
+                </div>
+                <div class="stat-item">
+                    <span>✅</span>
+                    <span>Success: <span id="success-rate">-</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let processedRequests = [];
+        
+        // Auto-resize textarea
+        const textarea = document.getElementById('user-input');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                processInput();
+            } else if (e.key === 'Escape') {
+                document.getElementById('user-input').value = '';
+                document.getElementById('user-input').style.height = 'auto';
+            }
+        });
+
+        function setInput(text) {
+            document.getElementById('user-input').value = text;
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+        }
+
+        async function processInput() {
+            const input = document.getElementById('user-input').value.trim();
+            if (!input) return;
+
+            const processBtn = document.getElementById('process-btn');
+            const loading = document.getElementById('loading');
+            const responseContainer = document.getElementById('response-container');
+
+            processBtn.disabled = true;
+            loading.style.display = 'flex';
+            responseContainer.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/process?input=${encodeURIComponent(input)}&detailed=true`);
+                if (!response.ok) throw new Error('Processing failed');
+
+                const data = await response.json();
+                displayResults(data);
+                processedRequests.push(data);
+                updatePerformanceStats();
+                
+                // Clear input
+                document.getElementById('user-input').value = '';
+                textarea.style.height = 'auto';
+                
+            } catch (error) {
+                displayError(error.message);
+            } finally {
+                processBtn.disabled = false;
+                loading.style.display = 'none';
+                responseContainer.style.display = 'block';
+            }
+        }
+
+        function displayResults(data) {
+            const mainResponse = document.getElementById('main-response');
+            const processingDetails = document.getElementById('processing-details');
+
+            mainResponse.innerHTML = `✅ "${data.result.final_response}"`;
+
+            processingDetails.innerHTML = `
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span>🤖 Claude Analysis (${data.result.processing_details.llm_analysis.processing_time})</span>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner">
+                            <div class="detail-item">
+                                <div class="detail-label">Tools Considered</div>
+                                <div class="detail-value">${data.result.processing_details.llm_analysis.tools_considered}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Selected Tools</div>
+                                <div class="detail-value">${data.result.processing_details.llm_analysis.tools_selected.map(t => `${t.tool_name}: ${t.reason}`).join('<br>')}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span>⚙️ Tool Executions (${data.result.processing_details.tool_executions.length})</span>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner">
+                            ${data.result.processing_details.tool_executions.map(exec => `
+                                <div class="detail-item">
+                                    <div class="detail-label">${exec.tool_name} (${exec.execution_time})</div>
+                                    <div class="detail-value">${exec.output || exec.error || 'No output'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span>📝 Profile Update (${data.result.processing_details.profile_update.processing_time})</span>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner">
+                            <div class="detail-item">
+                                <div class="detail-label">Changes Made</div>
+                                <div class="detail-value">${data.result.processing_details.profile_update.changes_made}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Profile Length</div>
+                                <div class="detail-value">${data.result.processing_details.profile_update.profile_length_before} → ${data.result.processing_details.profile_update.profile_length_after} chars</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Refresh profile after processing
+            loadProfile();
+        }
+
+        function displayError(message) {
+            const mainResponse = document.getElementById('main-response');
+            mainResponse.innerHTML = `❌ Error: ${message}`;
+            mainResponse.style.borderLeftColor = 'var(--accent-red)';
+        }
+
+        function toggleCollapsible(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.expand-icon');
+            
+            content.classList.toggle('active');
+            icon.classList.toggle('rotated');
+        }
+
+        async function loadTools() {
+            try {
+                const response = await fetch(`${API_BASE}/api/tools`);
+                const data = await response.json();
+                
+                document.getElementById('tools-count').textContent = data.count;
+                document.getElementById('tools-count-detailed').textContent = data.count;
+                
+                const toolsList = document.getElementById('tools-list');
+                toolsList.innerHTML = data.tools.map(tool => `
+                    <div class="tool-item">
+                        <div class="tool-name">${tool.name}</div>
+                        <div class="tool-description">${tool.description}</div>
+                        <div class="tool-stats">
+                            <span>Used: - times</span>
+                            <span>Avg: -</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load tools:', error);
+            }
+        }
+
+        async function loadProfile() {
+            try {
+                const response = await fetch(`${API_BASE}/profile`);
+                const profile = await response.text();
+                document.getElementById('profile-content').textContent = profile;
+            } catch (error) {
+                document.getElementById('profile-content').textContent = 'Failed to load profile';
+            }
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`);
+                const status = await response.json();
+                
+                const connectionDot = document.getElementById('connection-status');
+                const connectionText = document.getElementById('connection-text');
+                
+                if (status.status === 'healthy') {
+                    connectionDot.style.background = 'var(--accent-green)';
+                    connectionText.textContent = 'Connected';
+                } else {
+                    connectionDot.style.background = 'var(--accent-red)';
+                    connectionText.textContent = 'Disconnected';
+                }
+            } catch (error) {
+                const connectionDot = document.getElementById('connection-status');
+                const connectionText = document.getElementById('connection-text');
+                connectionDot.style.background = 'var(--accent-red)';
+                connectionText.textContent = 'Disconnected';
+            }
+        }
+
+        function updatePerformanceStats() {
+            if (processedRequests.length === 0) return;
+            
+            const avgResponseTime = processedRequests.reduce((sum, req) => {
+                return sum + parseInt(req.result.metadata.total_processing_time);
+            }, 0) / processedRequests.length;
+            
+            const totalLLMCalls = processedRequests.reduce((sum, req) => {
+                return sum + req.result.metadata.llm_calls_made;
+            }, 0);
+            
+            document.getElementById('avg-response').textContent = `${Math.round(avgResponseTime)}ms`;
+            document.getElementById('llm-calls').textContent = totalLLMCalls;
+            document.getElementById('success-rate').textContent = '100%';
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTools();
+            loadProfile();
+            checkStatus();
+            
+            // Refresh status every 30 seconds
+            setInterval(checkStatus, 30000);
+        });
+    </script>
+</body>
+</html>

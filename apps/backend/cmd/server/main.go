@@ -5,6 +5,7 @@ import (
 
 	"github.com/kirillsobolev/soul-mirror/backend/internal/config"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/llm"
+	"github.com/kirillsobolev/soul-mirror/backend/internal/logging"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/orchestrator"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/profile"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/server"
@@ -22,6 +23,9 @@ func main() {
 		log.Println("⚠️  No Anthropic API key - running in fallback mode")
 	}
 
+	logger := logging.InitLogger(cfg.Environment)
+	log.Println("✓ Structured logger initialized")
+
 	toolService := tools.NewToolService()
 	toolsList := toolService.ListTools()
 	log.Println("✓ Tool service initialized with tools:")
@@ -38,7 +42,7 @@ func main() {
 	orch := orchestrator.New(toolService, profileService, llmService)
 	log.Println("✓ Orchestrator initialized")
 
-	srv := server.New(orch, profileService, cfg.Port)
+	srv := server.New(orch, profileService, toolService, logger, cfg.Environment, cfg.Port)
 	log.Println("✓ Server initialized")
 
 	log.Println("🚀 Starting Soul Mirror backend server...")

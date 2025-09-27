@@ -22,7 +22,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current project stage:
 Stage 2 complete ✅ - Real LLM integration with Anthropic Claude
-Ready for Stage 3 - Enhanced tools & profile intelligence
+Stage 3 planned 📋 - Enhanced API & Simple UI
+- Simple web UI for backend interaction
+- Structured logging with slog
+- Enhanced API endpoints (/api/tools, /api/status)
+- Comprehensive process result details
 
 ## Project Rules
 
@@ -104,23 +108,26 @@ apps/backend/
 ├── cmd/server/          # Application entry point
 │   └── main.go
 ├── internal/            # Private packages
-│   ├── config/        # Configuration management
-│   │   └── config.go  # Environment variables + validation
+│   ├── api/            # HTTP handlers
+│   ├── config/         # Configuration management
+│   │   └── config.go   # Environment variables + validation
 │   ├── llm/            # LLM Service
 │   │   ├── llm.go      # Anthropic Claude integration
 │   │   └── mock.go     # Mock implementation
+│   ├── logging/        # Structured logging
 │   ├── orchestrator/   # Main coordinator
 │   │   ├── orchestrator.go
 │   │   └── mock.go
 │   ├── tools/          # Tool Service
 │   │   ├── registry.go # Interface + tools
+│   │   ├── time.go     # Time tool
 │   │   └── mock.go
 │   ├── profile/        # Profile Service
 │   │   ├── profile.go  # Plain text profile
 │   │   └── mock.go
-│   └── server/         # HTTP server
-│       ├── server.go
-│       └── handlers.go
+│   ├── server/         # HTTP server
+│   │   └── server.go
+│   └── types/          # Shared types
 └── scripts/
     ├── build.sh
     ├── check-all.sh
@@ -133,7 +140,8 @@ apps/backend/
 
 - go (1.23.0)
 - air (hot reload)
-- standard library HTTP server
+- gin (HTTP framework)
+- slog (structured logging)
 - github.com/joho/godotenv (environment configuration)
 - Anthropic Claude API
 
@@ -142,6 +150,8 @@ apps/backend/
 - `GET /health` - Health check
 - `GET /process?input=text` - Process user input
 - `GET /profile` - Get current profile
+- `GET /api/tools` - List available tools
+- `GET /api/status` - System status
 
 #### Key Interfaces
 
@@ -165,6 +175,12 @@ GetTool(name string) Tool
 ```go
 Get() (string, error)
 ProcessInput(input string) error
+```
+
+**Orchestrator:**
+```go
+ProcessInput(input string) (string, error)
+ProcessInputDetailed(input string) (*types.ProcessResponse, error)
 ```
 
 #### Development Commands
