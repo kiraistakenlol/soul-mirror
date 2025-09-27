@@ -6,52 +6,53 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/kirillsobolev/soul-mirror/backend/internal/api"
+	"github.com/kirillsobolev/soul-mirror/backend/internal/handlers"
 	"github.com/kirillsobolev/soul-mirror/backend/internal/orchestrator"
-	"github.com/kirillsobolev/soul-mirror/backend/internal/profile"
-	"github.com/kirillsobolev/soul-mirror/backend/internal/tools"
+	profileService "github.com/kirillsobolev/soul-mirror/backend/internal/profile"
+	toolsService "github.com/kirillsobolev/soul-mirror/backend/internal/tools"
 )
 
 type Server struct {
-	handlers *api.Handlers
-	port     string
-	logger   *slog.Logger
-	router   *gin.Engine
+	processHandler *handlers.ProcessHandler
+	profileHandler *handlers.ProfileHandler
+	toolsHandler   *handlers.ToolsHandler
+	statusHandler  *handlers.StatusHandler
+	port           string
+	logger         *slog.Logger
+	router         *gin.Engine
 }
 
-func New(orch orchestrator.Orchestrator, profileService profile.ProfileService, toolService tools.ToolService, logger *slog.Logger, environment, port string) *Server {
-	handlers := api.NewHandlers(orch, profileService, toolService, logger, environment)
-	
-	if environment == "production" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-	
+func New(orch orchestrator.Orchestrator, profileSvc profileService.ProfileService, toolSvc toolsService.ToolService, logger *slog.Logger, environment, port string) *Server {
+
 	router := gin.New()
-	
+
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
-	
+
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
-	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With"}
+	config.AllowMethods = []string{"*"}
+	config.AllowHeaders = []string{"*"}
 	router.Use(cors.New(config))
-	
+
 	return &Server{
-		handlers: handlers,
-		port:     port,
-		logger:   logger,
-		router:   router,
+		processHandler: handlers.NewProcessHandler(orch, logger),
+		profileHandler: handlers.NewProfileHandler(profileSvc, logger),
+		toolsHandler:   handlers.NewToolsHandler(toolSvc, logger),
+		statusHandler:  handlers.NewStatusHandler(toolSvc, logger, environment),
+		port:           port,
+		logger:         logger,
+		router:         router,
 	}
 }
 
 func (s *Server) setupRoutes() {
 	api := s.router.Group("/api")
 	{
-		api.GET("/status", s.handlers.StatusHandler)
-		api.GET("/process", s.handlers.ProcessHandler)
-		api.GET("/profile", s.handlers.ProfileHandler)
-		api.GET("/tools", s.handlers.ToolsHandler)
+		api.GET("/status", s.statusHandler.Handle)
+		api.GET("/process", s.processHandler.Handle)
+		api.GET("/profile", s.profileHandler.Handle)
+		api.GET("/tools", s.toolsHandler.Handle)
 	}
 }
 
