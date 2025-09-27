@@ -126,7 +126,6 @@ type content struct {
 }
 
 func (s *service) callAnthropic(prompt string) (string, error) {
-	// Log the prompt we're sending (truncated if very long)
 	promptPreview := prompt
 	if len(prompt) > 200 {
 		promptPreview = prompt[:200] + "..."
@@ -222,7 +221,6 @@ IMPORTANT:
 }
 
 func (s *service) parseToolSelections(response string) ([]ToolSelection, error) {
-	// Extract JSON from response (it might have extra text)
 	startIdx := strings.Index(response, "[")
 	endIdx := strings.LastIndex(response, "]")
 	
@@ -260,7 +258,6 @@ func (s *service) fallbackToolSelection(userInput string, availableTools []ToolD
 		return []ToolSelection{}, nil
 	}
 	
-	// Simple fallback: select first tool
 	selection := ToolSelection{
 		ToolName: availableTools[0].Name,
 		Reason:   "Fallback selection - first available tool",

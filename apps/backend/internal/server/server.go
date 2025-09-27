@@ -21,18 +21,15 @@ type Server struct {
 func New(orch orchestrator.Orchestrator, profileService profile.ProfileService, toolService tools.ToolService, logger *slog.Logger, environment, port string) *Server {
 	handlers := api.NewHandlers(orch, profileService, toolService, logger, environment)
 	
-	// Set Gin mode based on environment
 	if environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	
 	router := gin.New()
 	
-	// Add middleware
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	
-	// Configure CORS
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
@@ -48,18 +45,12 @@ func New(orch orchestrator.Orchestrator, profileService profile.ProfileService, 
 }
 
 func (s *Server) setupRoutes() {
-	// Health endpoint
-	s.router.GET("/health", s.handlers.HealthHandler)
-	
-	// Main endpoints
-	s.router.GET("/process", s.handlers.ProcessHandler)
-	s.router.GET("/profile", s.handlers.ProfileHandler)
-	
-	// API endpoints
 	api := s.router.Group("/api")
 	{
-		api.GET("/tools", s.handlers.ToolsHandler)
 		api.GET("/status", s.handlers.StatusHandler)
+		api.GET("/process", s.handlers.ProcessHandler)
+		api.GET("/profile", s.handlers.ProfileHandler)
+		api.GET("/tools", s.handlers.ToolsHandler)
 	}
 }
 

@@ -12,8 +12,7 @@ import (
 )
 
 type Orchestrator interface {
-	ProcessInput(input string) (string, error)
-	ProcessInputDetailed(input string) (*types.ProcessResponse, error)
+	ProcessInput(input string) (*types.ProcessResponse, error)
 }
 
 type orchestrator struct {
@@ -30,19 +29,10 @@ func New(toolService tools.ToolService, profileService profile.ProfileService, l
 	}
 }
 
-func (o *orchestrator) ProcessInput(input string) (string, error) {
-	detailed, err := o.ProcessInputDetailed(input)
-	if err != nil {
-		return "", err
-	}
-	return detailed.Result.FinalResponse, nil
-}
-
-func (o *orchestrator) ProcessInputDetailed(input string) (*types.ProcessResponse, error) {
+func (o *orchestrator) ProcessInput(input string) (*types.ProcessResponse, error) {
 	startTime := time.Now()
 	log.Printf("Orchestrator: Processing input: %s", input)
 
-	// Get available tools and convert to descriptors for LLM
 	toolsList := o.toolService.ListTools()
 	toolDescriptors := make([]llm.ToolDescriptor, len(toolsList))
 	for i, tool := range toolsList {
@@ -52,7 +42,6 @@ func (o *orchestrator) ProcessInputDetailed(input string) (*types.ProcessRespons
 		}
 	}
 
-	// Let LLM select the best tools for this input
 	llmStart := time.Now()
 	toolSelections, err := o.llmService.SelectTools(input, toolDescriptors)
 	llmDuration := time.Since(llmStart)
@@ -60,7 +49,6 @@ func (o *orchestrator) ProcessInputDetailed(input string) (*types.ProcessRespons
 		return nil, fmt.Errorf("tool selection failed: %w", err)
 	}
 
-	// Convert llm.ToolSelection to types.ToolSelection
 	apiToolSelections := make([]types.ToolSelection, len(toolSelections))
 	for i, sel := range toolSelections {
 		apiToolSelections[i] = types.ToolSelection{
@@ -76,7 +64,6 @@ func (o *orchestrator) ProcessInputDetailed(input string) (*types.ProcessRespons
 		log.Printf("Orchestrator: No tools needed - processing as reflection")
 		combinedResponse = fmt.Sprintf("Acknowledged: %s", input)
 	} else {
-		// Execute all selected tools and combine responses
 		var allResponses []string
 		for _, selection := range toolSelections {
 			log.Printf("Orchestrator: Executing tool '%s' - Reason: %s", selection.ToolName, selection.Reason)
@@ -127,7 +114,6 @@ func (o *orchestrator) ProcessInputDetailed(input string) (*types.ProcessRespons
 			log.Printf("Orchestrator: No tools executed successfully - treating as reflection")
 			combinedResponse = fmt.Sprintf("Acknowledged: %s", input)
 		} else {
-			// Combine all tool responses
 			combinedResponse = fmt.Sprintf("Processed with %d tools: %s", len(allResponses), allResponses[0])
 			if len(allResponses) > 1 {
 				combinedResponse = fmt.Sprintf("Processed with %d tools: [%s]", len(allResponses), fmt.Sprintf("%v", allResponses))
@@ -135,7 +121,6 @@ func (o *orchestrator) ProcessInputDetailed(input string) (*types.ProcessRespons
 		}
 	}
 
-	// Let ProfileService analyze and learn from the input
 	profileStart := time.Now()
 	profileLengthBefore := len(o.getProfileSafely())
 	err = o.profileService.ProcessInput(input)

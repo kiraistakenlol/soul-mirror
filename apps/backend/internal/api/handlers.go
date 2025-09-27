@@ -33,13 +33,11 @@ func NewHandlers(orch orchestrator.Orchestrator, profileSvc profile.ProfileServi
 func (h *Handlers) ProcessHandler(c *gin.Context) {
 	startTime := time.Now()
 	input := c.Query("input")
-	detailed := c.Query("detailed") == "true"
 	
 	h.logger.Info("Processing user input", 
 		slog.String("user_input", input),
 		slog.String("method", c.Request.Method),
-		slog.String("path", c.Request.URL.Path),
-		slog.Bool("detailed", detailed))
+		slog.String("path", c.Request.URL.Path))
 
 	if input == "" {
 		h.logger.Warn("Empty input received")
@@ -47,39 +45,21 @@ func (h *Handlers) ProcessHandler(c *gin.Context) {
 		return
 	}
 
-	if detailed {
-		response, err := h.orchestrator.ProcessInputDetailed(input)
-		if err != nil {
-			h.logger.Error("Detailed processing failed",
-				slog.String("error", err.Error()),
-				slog.String("user_input", input))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Processing failed"})
-			return
-		}
-
-		processingTime := time.Since(startTime)
-		h.logger.Info("Detailed processing completed",
-			slog.String("response", response.Result.FinalResponse),
-			slog.Duration("processing_time", processingTime))
-
-		c.JSON(http.StatusOK, response)
-	} else {
-		response, err := h.orchestrator.ProcessInput(input)
-		if err != nil {
-			h.logger.Error("Processing failed",
-				slog.String("error", err.Error()),
-				slog.String("user_input", input))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Processing failed"})
-			return
-		}
-
-		processingTime := time.Since(startTime)
-		h.logger.Info("Processing completed",
-			slog.String("response", response),
-			slog.Duration("processing_time", processingTime))
-
-		c.String(http.StatusOK, response)
+	response, err := h.orchestrator.ProcessInput(input)
+	if err != nil {
+		h.logger.Error("Processing failed",
+			slog.String("error", err.Error()),
+			slog.String("user_input", input))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Processing failed"})
+		return
 	}
+
+	processingTime := time.Since(startTime)
+	h.logger.Info("Processing completed",
+		slog.String("response", response.Result.FinalResponse),
+		slog.Duration("processing_time", processingTime))
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *Handlers) ProfileHandler(c *gin.Context) {
@@ -93,7 +73,7 @@ func (h *Handlers) ProfileHandler(c *gin.Context) {
 	}
 
 	h.logger.Debug("Profile retrieved", slog.Int("profile_length", len(profile)))
-	c.String(http.StatusOK, profile)
+	c.JSON(http.StatusOK, gin.H{"profile": profile})
 }
 
 func (h *Handlers) ToolsHandler(c *gin.Context) {
@@ -138,7 +118,3 @@ func (h *Handlers) StatusHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func (h *Handlers) HealthHandler(c *gin.Context) {
-	h.logger.Debug("Health check requested")
-	c.String(http.StatusOK, "OK")
-}

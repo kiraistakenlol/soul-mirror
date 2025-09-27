@@ -36,7 +36,6 @@ func (s *service) ProcessInput(input string) error {
 
 	log.Printf("ProfileService: Processing input: %s", input)
 
-	// Simply append input to profile with timestamp-like marker
 	s.profile += fmt.Sprintf("• %s\n", input)
 
 	log.Printf("ProfileService: Added input to profile")

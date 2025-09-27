@@ -105,29 +105,29 @@ apps/backend
 
 ```
 apps/backend/
-├── cmd/server/          # Application entry point
+├── cmd/server/
 │   └── main.go
-├── internal/            # Private packages
-│   ├── api/            # HTTP handlers
-│   ├── config/         # Configuration management
-│   │   └── config.go   # Environment variables + validation
-│   ├── llm/            # LLM Service
-│   │   ├── llm.go      # Anthropic Claude integration
-│   │   └── mock.go     # Mock implementation
-│   ├── logging/        # Structured logging
-│   ├── orchestrator/   # Main coordinator
+├── internal/
+│   ├── api/
+│   ├── config/
+│   │   └── config.go
+│   ├── llm/
+│   │   ├── llm.go
+│   │   └── mock.go
+│   ├── logging/
+│   ├── orchestrator/
 │   │   ├── orchestrator.go
 │   │   └── mock.go
-│   ├── tools/          # Tool Service
-│   │   ├── registry.go # Interface + tools
-│   │   ├── time.go     # Time tool
+│   ├── tools/
+│   │   ├── registry.go
+│   │   ├── time.go
 │   │   └── mock.go
-│   ├── profile/        # Profile Service
-│   │   ├── profile.go  # Plain text profile
+│   ├── profile/
+│   │   ├── profile.go
 │   │   └── mock.go
-│   ├── server/         # HTTP server
+│   ├── server/
 │   │   └── server.go
-│   └── types/          # Shared types
+│   └── types/
 └── scripts/
     ├── build.sh
     ├── check-all.sh
@@ -147,11 +147,12 @@ apps/backend/
 
 #### API Endpoints
 
-- `GET /health` - Health check
-- `GET /process?input=text` - Process user input
-- `GET /profile` - Get current profile
+All endpoints prefixed with `/api` and return JSON:
+
+- `GET /api/status` - System status and health
+- `GET /api/process?input=text` - Process input with detailed response
+- `GET /api/profile` - Get current profile
 - `GET /api/tools` - List available tools
-- `GET /api/status` - System status
 
 #### Key Interfaces
 
@@ -179,8 +180,7 @@ ProcessInput(input string) error
 
 **Orchestrator:**
 ```go
-ProcessInput(input string) (string, error)
-ProcessInputDetailed(input string) (*types.ProcessResponse, error)
+ProcessInput(input string) (*types.ProcessResponse, error)
 ```
 
 #### Development Commands

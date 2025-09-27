@@ -530,7 +530,7 @@
             responseContainer.style.display = 'none';
 
             try {
-                const response = await fetch(`${API_BASE}/process?input=${encodeURIComponent(input)}&detailed=true`);
+                const response = await fetch(`${API_BASE}/api/process?input=${encodeURIComponent(input)}`);
                 if (!response.ok) throw new Error('Processing failed');
 
                 const data = await response.json();
@@ -658,9 +658,9 @@
 
         async function loadProfile() {
             try {
-                const response = await fetch(`${API_BASE}/profile`);
-                const profile = await response.text();
-                document.getElementById('profile-content').textContent = profile;
+                const response = await fetch(`${API_BASE}/api/profile`);
+                const data = await response.json();
+                document.getElementById('profile-content').textContent = data.profile;
             } catch (error) {
                 document.getElementById('profile-content').textContent = 'Failed to load profile';
             }
