@@ -20,14 +20,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Idea Management**: Captures and organizes your creative thoughts for later action
 - **Contextual Intelligence**: Uses your calendar, location, and profile to provide relevant suggestions
 
-## Current project stage:
-Stage 2 complete ✅ - Real LLM integration with Anthropic Claude
-Stage 3 planned 📋 - Enhanced API & Simple UI
-- Simple web UI for backend interaction
-- Structured logging with slog
-- Enhanced API endpoints (/api/tools, /api/status)
-- Comprehensive process result details
-
 ## Project Rules
 
 **IMPORTANT: These rules must be followed when working with this codebase:**
