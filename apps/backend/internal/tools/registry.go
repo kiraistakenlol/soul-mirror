@@ -26,6 +26,7 @@ func NewToolService() ToolService {
 	}
 
 	s.RegisterTool(NewTimeTool())
+	s.RegisterTool(NewRandomTool())
 	return s
 }
 
