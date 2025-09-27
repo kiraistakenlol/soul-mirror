@@ -571,7 +571,7 @@
                             </div>
                             <div class="detail-item">
                                 <div class="detail-label">Selected Tools</div>
-                                <div class="detail-value">${data.result.processing_details.llm_analysis.tools_selected.map(t => `${t.tool_name}: ${t.reason}`).join('<br>')}</div>
+                                <div class="detail-value">${data.result.processing_details.llm_analysis.tools_selected && data.result.processing_details.llm_analysis.tools_selected.length > 0 ? data.result.processing_details.llm_analysis.tools_selected.map(t => `${t.tool_name}: ${t.reason}`).join('<br>') : 'None'}</div>
                             </div>
                         </div>
                     </div>
@@ -579,17 +579,17 @@
                 
                 <div class="collapsible">
                     <div class="collapsible-header" onclick="toggleCollapsible(this)">
-                        <span>⚙️ Tool Executions (${data.result.processing_details.tool_executions.length})</span>
+                        <span>⚙️ Tool Executions (${data.result.processing_details.tool_executions ? data.result.processing_details.tool_executions.length : 0})</span>
                         <span class="expand-icon">▼</span>
                     </div>
                     <div class="collapsible-content">
                         <div class="collapsible-inner">
-                            ${data.result.processing_details.tool_executions.map(exec => `
+                            ${data.result.processing_details.tool_executions && data.result.processing_details.tool_executions.length > 0 ? data.result.processing_details.tool_executions.map(exec => `
                                 <div class="detail-item">
                                     <div class="detail-label">${exec.tool_name} (${exec.execution_time})</div>
                                     <div class="detail-value">${exec.output || exec.error || 'No output'}</div>
                                 </div>
-                            `).join('')}
+                            `).join('') : '<div class="detail-item"><div class="detail-value">No tool executions</div></div>'}
                         </div>
                     </div>
                 </div>
@@ -693,11 +693,13 @@
             if (processedRequests.length === 0) return;
             
             const avgResponseTime = processedRequests.reduce((sum, req) => {
-                return sum + parseInt(req.result.metadata.total_processing_time);
+                const time = req.result?.metadata?.total_processing_time;
+                return sum + (time ? parseInt(time) : 0);
             }, 0) / processedRequests.length;
             
             const totalLLMCalls = processedRequests.reduce((sum, req) => {
-                return sum + req.result.metadata.llm_calls_made;
+                const calls = req.result?.metadata?.llm_calls_made;
+                return sum + (calls || 0);
             }, 0);
             
             document.getElementById('avg-response').textContent = `${Math.round(avgResponseTime)}ms`;

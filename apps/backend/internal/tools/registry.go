@@ -1,7 +1,6 @@
 package tools
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -25,8 +24,7 @@ func NewToolService() ToolService {
 	s := &toolService{
 		tools: make(map[string]Tool),
 	}
-	
-	s.RegisterTool(&EchoTool{})
+
 	s.RegisterTool(NewTimeTool())
 	return s
 }
@@ -52,20 +50,4 @@ func (s *toolService) ListTools() []Tool {
 		tools = append(tools, tool)
 	}
 	return tools
-}
-
-type EchoTool struct{}
-
-func (t *EchoTool) Execute(input string) (string, error) {
-	log.Printf("EchoTool: Executing with input: %s", input)
-	response := fmt.Sprintf("Echo: %s", input)
-	return response, nil
-}
-
-func (t *EchoTool) Name() string {
-	return "echo"
-}
-
-func (t *EchoTool) Description() string {
-	return "Echoes back the input with a prefix. Useful for testing and simple responses."
 }
