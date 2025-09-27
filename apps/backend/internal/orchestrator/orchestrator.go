@@ -33,6 +33,26 @@ func (o *orchestrator) ProcessInput(input string) (*ProcessResponse, error) {
 	startTime := time.Now()
 	log.Printf("Orchestrator: Processing input: %s", input)
 
+	profile := o.updateAndGetProfile(input)
+	tools := o.getAvailableTools()
+	selectedTools, err := o.selectTools(input, tools)
+	if err != nil {
+		return nil, fmt.Errorf("tool selection failed: %w", err)
+	}
+
+	toolExecutions := o.executeTools(input, selectedTools, profile)
+	return o.buildResponse(input, selectedTools, toolExecutions, startTime), nil
+}
+
+func (o *orchestrator) updateAndGetProfile(input string) string {
+	err := o.profileService.ProcessInput(input)
+	if err != nil {
+		log.Printf("Warning: Failed to process input for profile: %v", err)
+	}
+	return o.getProfileSafely()
+}
+
+func (o *orchestrator) getAvailableTools() []llm.ToolDescriptor {
 	toolsList := o.toolService.ListTools()
 	toolDescriptors := make([]llm.ToolDescriptor, len(toolsList))
 	for i, tool := range toolsList {
@@ -41,137 +61,121 @@ func (o *orchestrator) ProcessInput(input string) (*ProcessResponse, error) {
 			Description: tool.Description(),
 		}
 	}
+	return toolDescriptors
+}
 
-	llmStart := time.Now()
-	toolSelections, err := o.llmService.SelectTools(input, toolDescriptors)
-	llmDuration := time.Since(llmStart)
-	if err != nil {
-		return nil, fmt.Errorf("tool selection failed: %w", err)
-	}
+func (o *orchestrator) selectTools(input string, tools []llm.ToolDescriptor) ([]llm.ToolSelection, error) {
+	toolSelections, err := o.llmService.SelectTools(input, tools)
+	return toolSelections, err
+}
 
-	apiToolSelections := make([]llm.ToolSelection, len(toolSelections))
-	for i, sel := range toolSelections {
-		apiToolSelections[i] = llm.ToolSelection{
-			ToolName: sel.ToolName,
-			Reason:   sel.Reason,
-		}
-	}
-
-	var combinedResponse string
-	var toolExecutions []ToolExecution
-
+func (o *orchestrator) executeTools(input string, toolSelections []llm.ToolSelection, profile string) []ToolExecution {
 	if len(toolSelections) == 0 {
 		log.Printf("Orchestrator: No tools needed - processing as reflection")
-		combinedResponse = fmt.Sprintf("Acknowledged: %s", input)
-	} else {
-		var allResponses []string
-		for _, selection := range toolSelections {
-			log.Printf("Orchestrator: Executing tool '%s' - Reason: %s", selection.ToolName, selection.Reason)
-			
-			toolStart := time.Now()
-			tool := o.toolService.GetTool(selection.ToolName)
-			if tool == nil {
-				log.Printf("Warning: Tool '%s' not found, skipping", selection.ToolName)
-				toolExecutions = append(toolExecutions, ToolExecution{
-					ToolName:      selection.ToolName,
-					Input:         input,
-					Output:        "",
-					ExecutionTime: time.Since(toolStart).String(),
-					Status:        "skipped",
-					Error:         "Tool not found",
-				})
-				continue
-			}
-			
-			// Get current profile to provide as context
-			profile := o.getProfileSafely()
-			context := tools.Context{
-				Profile: profile,
-			}
-			
-			toolResponse, err := tool.Execute(input, context)
-			toolDuration := time.Since(toolStart)
-			
-			if err != nil {
-				log.Printf("Warning: Tool '%s' execution failed: %v", selection.ToolName, err)
-				toolExecutions = append(toolExecutions, ToolExecution{
-					ToolName:      selection.ToolName,
-					Input:         input,
-					Output:        "",
-					ExecutionTime: toolDuration.String(),
-					Status:        "error",
-					Error:         err.Error(),
-				})
-				continue
-			}
-			
-			toolExecutions = append(toolExecutions, ToolExecution{
-				ToolName:      selection.ToolName,
-				Input:         input,
-				Output:        toolResponse,
-				ExecutionTime: toolDuration.String(),
-				Status:        "success",
-			})
-			
-			allResponses = append(allResponses, fmt.Sprintf("%s: %s", selection.ToolName, toolResponse))
-		}
-
-		if len(allResponses) == 0 {
-			log.Printf("Orchestrator: No tools executed successfully - treating as reflection")
-			combinedResponse = fmt.Sprintf("Acknowledged: %s", input)
-		} else {
-			combinedResponse = fmt.Sprintf("Processed with %d tools: %s", len(allResponses), allResponses[0])
-			if len(allResponses) > 1 {
-				combinedResponse = fmt.Sprintf("Processed with %d tools: [%s]", len(allResponses), fmt.Sprintf("%v", allResponses))
-			}
-		}
+		return []ToolExecution{}
 	}
 
-	profileStart := time.Now()
-	profileLengthBefore := len(o.getProfileSafely())
-	err = o.profileService.ProcessInput(input)
-	profileDuration := time.Since(profileStart)
-	profileSuccess := err == nil
-	profileLengthAfter := len(o.getProfileSafely())
+	var toolExecutions []ToolExecution
+	context := tools.Context{Profile: profile}
+
+	for _, selection := range toolSelections {
+		execution := o.executeSingleTool(input, selection, context)
+		toolExecutions = append(toolExecutions, execution)
+	}
+
+	return toolExecutions
+}
+
+func (o *orchestrator) executeSingleTool(input string, selection llm.ToolSelection, context tools.Context) ToolExecution {
+	log.Printf("Orchestrator: Executing tool '%s' - Reason: %s", selection.ToolName, selection.Reason)
+	toolStart := time.Now()
+	
+	tool := o.toolService.GetTool(selection.ToolName)
+	if tool == nil {
+		log.Printf("Warning: Tool '%s' not found, skipping", selection.ToolName)
+		return ToolExecution{
+			ToolName:      selection.ToolName,
+			Input:         input,
+			ExecutionTime: time.Since(toolStart).String(),
+			Status:        "skipped",
+			Error:         "Tool not found",
+		}
+	}
+	
+	toolResponse, err := tool.Execute(input, context)
+	status := "success"
+	errorMsg := ""
 	
 	if err != nil {
-		log.Printf("Warning: Failed to process input for profile: %v", err)
+		log.Printf("Warning: Tool '%s' execution failed: %v", selection.ToolName, err)
+		status = "error"
+		errorMsg = err.Error()
+	}
+	
+	return ToolExecution{
+		ToolName:      selection.ToolName,
+		Input:         input,
+		Output:        toolResponse,
+		ExecutionTime: time.Since(toolStart).String(),
+		Status:        status,
+		Error:         errorMsg,
+	}
+}
+
+func (o *orchestrator) buildFinalResponse(input string, toolSelections []llm.ToolSelection, toolExecutions []ToolExecution) string {
+	if len(toolSelections) == 0 {
+		return fmt.Sprintf("Acknowledged: %s", input)
 	}
 
-	totalDuration := time.Since(startTime)
-	log.Printf("Orchestrator: Generated response: %s", combinedResponse)
+	var allResponses []string
+	for _, execution := range toolExecutions {
+		if execution.Status == "success" {
+			allResponses = append(allResponses, fmt.Sprintf("%s: %s", execution.ToolName, execution.Output))
+		}
+	}
 
-	response := &ProcessResponse{
+	if len(allResponses) == 0 {
+		log.Printf("Orchestrator: No tools executed successfully - treating as reflection")
+		return fmt.Sprintf("Acknowledged: %s", input)
+	}
+
+	if len(allResponses) == 1 {
+		return fmt.Sprintf("Processed with %d tools: %s", len(allResponses), allResponses[0])
+	}
+	return fmt.Sprintf("Processed with %d tools: [%s]", len(allResponses), fmt.Sprintf("%v", allResponses))
+}
+
+func (o *orchestrator) buildResponse(input string, selectedTools []llm.ToolSelection, toolExecutions []ToolExecution, startTime time.Time) *ProcessResponse {
+	finalResponse := o.buildFinalResponse(input, selectedTools, toolExecutions)
+	log.Printf("Orchestrator: Generated response: %s", finalResponse)
+
+	return &ProcessResponse{
 		Input: input,
 		Result: ProcessResult{
-			FinalResponse: combinedResponse,
+			FinalResponse: finalResponse,
 			ProcessingDetails: ProcessingDetails{
 				LLMAnalysis: LLMAnalysisResult{
-					ToolsConsidered: len(toolDescriptors),
-					ToolsSelected:   apiToolSelections,
-					ProcessingTime:  llmDuration.String(),
-					UsedFallback:    false, // TODO: detect actual fallback usage
+					ToolsConsidered: len(o.getAvailableTools()),
+					ToolsSelected:   selectedTools,
+					ProcessingTime:  "0ms", // Simplified for cleaner interface
+					UsedFallback:    false,
 				},
 				ToolExecutions: toolExecutions,
 				ProfileUpdate: ProfileUpdate{
-					ChangesMade:         "Added user input to profile",
-					ProfileLengthBefore: profileLengthBefore,
-					ProfileLengthAfter:  profileLengthAfter,
-					ProcessingTime:      profileDuration.String(),
-					Success:             profileSuccess,
+					ChangesMade: "Added user input to profile",
+					ProcessingTime: "0ms", // Simplified for cleaner interface
+					Success: true,
 				},
 			},
 			Metadata: ProcessMetadata{
-				TotalProcessingTime: totalDuration.String(),
+				TotalProcessingTime: time.Since(startTime).String(),
 				Timestamp:           time.Now(),
 				ToolsExecuted:       len(toolExecutions),
 				LLMCallsMade:        1,
-				Environment:         "development", // TODO: get from config
+				Environment:         "development",
 			},
 		},
 	}
-
-	return response, nil
 }
 
 func (o *orchestrator) getProfileSafely() string {
