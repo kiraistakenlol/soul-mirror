@@ -1,3 +1,4 @@
+// logging initializes structured logging with environment-specific formatting.
 package logging
 
 import (

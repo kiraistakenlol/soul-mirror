@@ -1,3 +1,4 @@
+// tools provides a registry for managing and executing available system tools.
 package tools
 
 import (

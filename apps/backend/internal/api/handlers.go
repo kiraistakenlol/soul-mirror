@@ -1,3 +1,4 @@
+// api provides HTTP handlers for the Soul Mirror backend REST API endpoints.
 package api
 
 import (

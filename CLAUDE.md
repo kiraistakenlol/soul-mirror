@@ -37,6 +37,7 @@ Stage 3 planned 📋 - Enhanced API & Simple UI
 - keep it as simple as you can
 - follow DRY(don't repeat yourself principle) - always try to break complex compoents into smaller reusable parts with clear signatures
 - avoid redundancy
+- every component in the system should have a concise comment explaining what it does (not how it will be used)
 - minimalism in code and docs (no redundant descriptions, no obvious comments, no unnecessary formatting) - but be expressive in logs and script output for clarity. examples: 
     - ✅ `go`
     - ❌ `**Go**: Backend development language`

@@ -1,3 +1,4 @@
+// randomTool generates various random values including numbers, coin flips, and dice rolls.
 package tools
 
 import (

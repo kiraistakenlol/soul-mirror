@@ -1,3 +1,4 @@
+// types defines shared data structures used across the application for API responses and internal communication.
 package types
 
 import "time"

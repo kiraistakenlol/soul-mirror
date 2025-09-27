@@ -1,3 +1,4 @@
+// timeTool provides current date and time information.
 package tools
 
 import (

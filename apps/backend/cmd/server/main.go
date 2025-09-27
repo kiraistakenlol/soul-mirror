@@ -1,3 +1,4 @@
+// main initializes and starts the Soul Mirror backend server with all its services.
 package main
 
 import (

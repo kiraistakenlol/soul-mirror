@@ -1,3 +1,4 @@
+// server configures and runs the HTTP server with routing and middleware.
 package server
 
 import (

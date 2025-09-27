@@ -1,3 +1,4 @@
+// profile manages and stores user profile data accumulated from inputs.
 package profile
 
 import (

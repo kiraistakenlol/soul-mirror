@@ -1,3 +1,4 @@
+// llm provides integration with language models for intelligent tool selection and text processing.
 package llm
 
 import (

@@ -1,3 +1,4 @@
+// orchestrator coordinates the workflow between LLM, tool, and profile services to process user input.
 package orchestrator
 
 import (
