@@ -185,6 +185,22 @@
             margin-bottom: 15px;
         }
 
+        .copy-btn {
+            background: var(--bg-tertiary);
+            border: var(--border);
+            border-radius: 4px;
+            padding: 5px 10px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-blue);
+            color: white;
+        }
+
         .results-title {
             font-size: 16px;
             font-weight: 600;
@@ -406,11 +422,6 @@
                 autofocus
             ></textarea>
             <div class="input-controls">
-                <div class="quick-actions">
-                    <button class="quick-action" onclick="setInput('feeling overwhelmed')">feeling overwhelmed</button>
-                    <button class="quick-action" onclick="setInput('had an idea')">had an idea</button>
-                    <button class="quick-action" onclick="setInput('want to learn')">want to learn</button>
-                </div>
                 <button id="process-btn" class="process-btn" onclick="processInput()">
                     <span>Process</span>
                     <span style="font-size: 12px;">Ctrl+↵</span>
@@ -421,27 +432,18 @@
         <div class="results-section">
             <div class="results-header">
                 <div class="results-title">📊 Results</div>
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <span>Processing...</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="copy-btn" id="copy-btn" onclick="copyResponse()" style="display: none;">Copy JSON</button>
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <span>Processing...</span>
+                    </div>
                 </div>
             </div>
             
             <div id="response-container" style="display: none;">
                 <div class="response" id="main-response">
-                    <!-- Response will be inserted here -->
-                </div>
-                
-                <div class="collapsible">
-                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
-                        <span>📊 Processing Details</span>
-                        <span class="expand-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        <div class="collapsible-inner" id="processing-details">
-                            <!-- Processing details will be inserted here -->
-                        </div>
-                    </div>
+                    <!-- JSON response will be inserted here -->
                 </div>
             </div>
         </div>
@@ -468,26 +470,6 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-title">
-                <span>📈</span>
-                <span>Performance</span>
-            </div>
-            <div class="performance-stats" id="performance-stats">
-                <div class="stat-item">
-                    <span>📈</span>
-                    <span>Avg Response: <span id="avg-response">-</span></span>
-                </div>
-                <div class="stat-item">
-                    <span>🧠</span>
-                    <span>LLM Calls: <span id="llm-calls">-</span></span>
-                </div>
-                <div class="stat-item">
-                    <span>✅</span>
-                    <span>Success: <span id="success-rate">-</span></span>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -511,11 +493,6 @@
             }
         });
 
-        function setInput(text) {
-            document.getElementById('user-input').value = text;
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
-        }
 
         async function processInput() {
             const input = document.getElementById('user-input').value.trim();
@@ -536,7 +513,6 @@
                 const data = await response.json();
                 displayResults(data);
                 processedRequests.push(data);
-                updatePerformanceStats();
                 
                 // Clear input
                 document.getElementById('user-input').value = '';
@@ -551,71 +527,39 @@
             }
         }
 
+        let currentResponseData = null;
+
         function displayResults(data) {
+            currentResponseData = data;
             const mainResponse = document.getElementById('main-response');
-            const processingDetails = document.getElementById('processing-details');
-
-            mainResponse.innerHTML = `✅ "${data.result.final_response}"`;
-
-            processingDetails.innerHTML = `
-                <div class="collapsible">
-                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
-                        <span>🤖 Claude Analysis (${data.result.processing_details.llm_analysis.processing_time})</span>
-                        <span class="expand-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        <div class="collapsible-inner">
-                            <div class="detail-item">
-                                <div class="detail-label">Tools Considered</div>
-                                <div class="detail-value">${data.result.processing_details.llm_analysis.tools_considered}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Selected Tools</div>
-                                <div class="detail-value">${data.result.processing_details.llm_analysis.tools_selected && data.result.processing_details.llm_analysis.tools_selected.length > 0 ? data.result.processing_details.llm_analysis.tools_selected.map(t => `${t.tool_name}: ${t.reason}`).join('<br>') : 'None'}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="collapsible">
-                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
-                        <span>⚙️ Tool Executions (${data.result.processing_details.tool_executions ? data.result.processing_details.tool_executions.length : 0})</span>
-                        <span class="expand-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        <div class="collapsible-inner">
-                            ${data.result.processing_details.tool_executions && data.result.processing_details.tool_executions.length > 0 ? data.result.processing_details.tool_executions.map(exec => `
-                                <div class="detail-item">
-                                    <div class="detail-label">${exec.tool_name} (${exec.execution_time})</div>
-                                    <div class="detail-value">${exec.output || exec.error || 'No output'}</div>
-                                </div>
-                            `).join('') : '<div class="detail-item"><div class="detail-value">No tool executions</div></div>'}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="collapsible">
-                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
-                        <span>📝 Profile Update (${data.result.processing_details.profile_update.processing_time})</span>
-                        <span class="expand-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        <div class="collapsible-inner">
-                            <div class="detail-item">
-                                <div class="detail-label">Changes Made</div>
-                                <div class="detail-value">${data.result.processing_details.profile_update.changes_made}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Profile Length</div>
-                                <div class="detail-value">${data.result.processing_details.profile_update.profile_length_before} → ${data.result.processing_details.profile_update.profile_length_after} chars</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
+            const copyBtn = document.getElementById('copy-btn');
+            
+            mainResponse.innerHTML = `<pre style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px;">${JSON.stringify(data, null, 2)}</pre>`;
+            copyBtn.style.display = 'block';
+            
             // Refresh profile after processing
             loadProfile();
+        }
+
+        function copyResponse() {
+            if (!currentResponseData) return;
+            
+            const jsonString = JSON.stringify(currentResponseData, null, 2);
+            navigator.clipboard.writeText(jsonString).then(() => {
+                const copyBtn = document.getElementById('copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                copyBtn.style.background = 'var(--accent-green)';
+                copyBtn.style.color = 'white';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '';
+                    copyBtn.style.color = '';
+                }, 1000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
         }
 
         function displayError(message) {
@@ -624,13 +568,6 @@
             mainResponse.style.borderLeftColor = 'var(--accent-red)';
         }
 
-        function toggleCollapsible(header) {
-            const content = header.nextElementSibling;
-            const icon = header.querySelector('.expand-icon');
-            
-            content.classList.toggle('active');
-            icon.classList.toggle('rotated');
-        }
 
         async function loadTools() {
             try {
@@ -645,10 +582,6 @@
                     <div class="tool-item">
                         <div class="tool-name">${tool.name}</div>
                         <div class="tool-description">${tool.description}</div>
-                        <div class="tool-stats">
-                            <span>Used: - times</span>
-                            <span>Avg: -</span>
-                        </div>
                     </div>
                 `).join('');
             } catch (error) {
@@ -689,23 +622,6 @@
             }
         }
 
-        function updatePerformanceStats() {
-            if (processedRequests.length === 0) return;
-            
-            const avgResponseTime = processedRequests.reduce((sum, req) => {
-                const time = req.result?.metadata?.total_processing_time;
-                return sum + (time ? parseInt(time) : 0);
-            }, 0) / processedRequests.length;
-            
-            const totalLLMCalls = processedRequests.reduce((sum, req) => {
-                const calls = req.result?.metadata?.llm_calls_made;
-                return sum + (calls || 0);
-            }, 0);
-            
-            document.getElementById('avg-response').textContent = `${Math.round(avgResponseTime)}ms`;
-            document.getElementById('llm-calls').textContent = totalLLMCalls;
-            document.getElementById('success-rate').textContent = '100%';
-        }
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {

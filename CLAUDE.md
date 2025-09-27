@@ -39,6 +39,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - ❌ Long descriptive names that repeat context
     - ✅ `echo "✓ Build successful"` in scripts (expressive for debugging)
     - ✅ `fmt.Println("Server starting on :8080")` (helpful log)
+- remove dead code immediately - when changing behavior, completely remove old methods/functions rather than leaving them unused or simplified. no fallback methods that just return empty values
 
 ## Modules
 
@@ -57,8 +58,7 @@ apps/backend
 - Handles multiple tool execution with error handling
 
 **LLM Service:**
-- Anthropic Claude integration for intelligent tool selection
-- Fallback logic when API unavailable
+- Anthropic Claude Haiku integration for fast tool selection
 - JSON-based tool selection with reasoning
 - Text processing capabilities
 
@@ -142,14 +142,14 @@ apps/backend/
 - gin (HTTP framework)
 - slog (structured logging)
 - github.com/joho/godotenv (environment configuration)
-- Anthropic Claude API
+- Anthropic Claude Haiku API
 
 #### API Endpoints
 
 All endpoints prefixed with `/api` and return JSON:
 
 - `GET /api/status` - System status and health
-- `GET /api/process?input=text` - Process input with detailed response
+- `GET /api/process?input=text` - Process input with JSON response (tool_selection_result, tool_executions, profile_update)
 - `GET /api/profile` - Get current profile
 - `GET /api/tools` - List available tools
 

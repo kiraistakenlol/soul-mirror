@@ -14,20 +14,18 @@ type ProcessResponse struct {
 type ProcessResult struct {
 	FinalResponse     string            `json:"final_response"`
 	ProcessingDetails ProcessingDetails `json:"processing_details"`
-	Metadata          ProcessMetadata   `json:"metadata"`
 }
 
 type ProcessingDetails struct {
-	LLMAnalysis    LLMAnalysisResult `json:"llm_analysis"`
-	ToolExecutions []ToolExecution   `json:"tool_executions"`
-	ProfileUpdate  ProfileUpdate     `json:"profile_update"`
+	ToolSelectionResult ToolSelectionResult `json:"tool_selection_result"`
+	ToolExecutions      []ToolExecution     `json:"tool_executions"`
+	ProfileUpdate       ProfileUpdate       `json:"profile_update"`
 }
 
-type LLMAnalysisResult struct {
+type ToolSelectionResult struct {
 	ToolsConsidered int                 `json:"tools_considered"`
 	ToolsSelected   []llm.ToolSelection `json:"tools_selected"`
 	ProcessingTime  string              `json:"processing_time"`
-	UsedFallback    bool                `json:"used_fallback"`
 }
 
 type ToolExecution struct {

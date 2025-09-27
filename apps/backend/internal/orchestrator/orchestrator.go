@@ -30,26 +30,46 @@ func New(toolService tools.ToolService, profileService profile.ProfileService, l
 }
 
 func (o *orchestrator) ProcessInput(input string) (*ProcessResponse, error) {
-	startTime := time.Now()
 	log.Printf("Orchestrator: Processing input: %s", input)
 
-	profile := o.updateAndGetProfile(input)
+	profileStart := time.Now()
+	profile, profileUpdate := o.updateAndGetProfile(input)
+	profileTime := time.Since(profileStart)
+	
 	tools := o.getAvailableTools()
+	selectionStart := time.Now()
 	selectedTools, err := o.selectTools(input, tools)
 	if err != nil {
 		return nil, fmt.Errorf("tool selection failed: %w", err)
 	}
+	selectionTime := time.Since(selectionStart)
 
 	toolExecutions := o.executeTools(input, selectedTools, profile)
-	return o.buildResponse(input, selectedTools, toolExecutions, startTime), nil
+	return o.buildResponse(input, selectedTools, toolExecutions, profileUpdate, profileTime, selectionTime), nil
 }
 
-func (o *orchestrator) updateAndGetProfile(input string) string {
+func (o *orchestrator) updateAndGetProfile(input string) (string, ProfileUpdate) {
+	profileBefore := o.getProfileSafely()
+	lengthBefore := len(profileBefore)
+	
 	err := o.profileService.ProcessInput(input)
+	profileAfter := o.getProfileSafely()
+	lengthAfter := len(profileAfter)
+	
+	update := ProfileUpdate{
+		ProfileLengthBefore: lengthBefore,
+		ProfileLengthAfter:  lengthAfter,
+		Success:             err == nil,
+	}
+	
 	if err != nil {
 		log.Printf("Warning: Failed to process input for profile: %v", err)
+		update.ChangesMade = fmt.Sprintf("Failed to update profile: %v", err)
+	} else {
+		update.ChangesMade = "Added user input to profile"
 	}
-	return o.getProfileSafely()
+	
+	return profileAfter, update
 }
 
 func (o *orchestrator) getAvailableTools() []llm.ToolDescriptor {
@@ -124,7 +144,7 @@ func (o *orchestrator) executeSingleTool(input string, selection llm.ToolSelecti
 
 func (o *orchestrator) buildFinalResponse(input string, toolSelections []llm.ToolSelection, toolExecutions []ToolExecution) string {
 	if len(toolSelections) == 0 {
-		return fmt.Sprintf("Acknowledged: %s", input)
+		return ""
 	}
 
 	var allResponses []string
@@ -136,7 +156,7 @@ func (o *orchestrator) buildFinalResponse(input string, toolSelections []llm.Too
 
 	if len(allResponses) == 0 {
 		log.Printf("Orchestrator: No tools executed successfully - treating as reflection")
-		return fmt.Sprintf("Acknowledged: %s", input)
+		return ""
 	}
 
 	if len(allResponses) == 1 {
@@ -145,34 +165,24 @@ func (o *orchestrator) buildFinalResponse(input string, toolSelections []llm.Too
 	return fmt.Sprintf("Processed with %d tools: [%s]", len(allResponses), fmt.Sprintf("%v", allResponses))
 }
 
-func (o *orchestrator) buildResponse(input string, selectedTools []llm.ToolSelection, toolExecutions []ToolExecution, startTime time.Time) *ProcessResponse {
+func (o *orchestrator) buildResponse(input string, selectedTools []llm.ToolSelection, toolExecutions []ToolExecution, profileUpdate ProfileUpdate, profileTime time.Duration, selectionTime time.Duration) *ProcessResponse {
 	finalResponse := o.buildFinalResponse(input, selectedTools, toolExecutions)
 	log.Printf("Orchestrator: Generated response: %s", finalResponse)
+
+	profileUpdate.ProcessingTime = profileTime.String()
 
 	return &ProcessResponse{
 		Input: input,
 		Result: ProcessResult{
 			FinalResponse: finalResponse,
 			ProcessingDetails: ProcessingDetails{
-				LLMAnalysis: LLMAnalysisResult{
+				ToolSelectionResult: ToolSelectionResult{
 					ToolsConsidered: len(o.getAvailableTools()),
 					ToolsSelected:   selectedTools,
-					ProcessingTime:  "0ms", // Simplified for cleaner interface
-					UsedFallback:    false,
+					ProcessingTime:  selectionTime.String(),
 				},
 				ToolExecutions: toolExecutions,
-				ProfileUpdate: ProfileUpdate{
-					ChangesMade: "Added user input to profile",
-					ProcessingTime: "0ms", // Simplified for cleaner interface
-					Success: true,
-				},
-			},
-			Metadata: ProcessMetadata{
-				TotalProcessingTime: time.Since(startTime).String(),
-				Timestamp:           time.Now(),
-				ToolsExecuted:       len(toolExecutions),
-				LLMCallsMade:        1,
-				Environment:         "development",
+				ProfileUpdate:  profileUpdate,
 			},
 		},
 	}

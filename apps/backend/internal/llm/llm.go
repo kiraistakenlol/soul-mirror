@@ -41,8 +41,8 @@ func (s *service) SelectTools(userInput string, availableTools []ToolDescriptor)
 	log.Printf("🔍 LLM Tool Selection for: '%s'", userInput)
 
 	if !s.config.HasAnthropicKey() {
-		log.Printf("⚠️  No API key - using fallback selection")
-		return s.fallbackToolSelection(userInput, availableTools)
+		log.Printf("⚠️  No API key - no tools selected")
+		return []ToolSelection{}, nil
 	}
 
 	log.Printf("📤 Asking Claude to select from %d available tools", len(availableTools))
@@ -54,15 +54,15 @@ func (s *service) SelectTools(userInput string, availableTools []ToolDescriptor)
 	response, err := s.callAnthropic(prompt)
 	if err != nil {
 		log.Printf("❌ Anthropic API error: %v", err)
-		log.Printf("🔄 Falling back to simple selection")
-		return s.fallbackToolSelection(userInput, availableTools)
+		log.Printf("🔄 No tools selected due to API error")
+		return []ToolSelection{}, nil
 	}
 
 	selections, err := s.parseToolSelections(response)
 	if err != nil {
 		log.Printf("❌ Failed to parse Claude's response: %v", err)
-		log.Printf("🔄 Falling back to simple selection")
-		return s.fallbackToolSelection(userInput, availableTools)
+		log.Printf("🔄 No tools selected due to parsing error")
+		return []ToolSelection{}, nil
 	}
 
 	if len(selections) == 0 {
@@ -125,7 +125,7 @@ func (s *service) callAnthropic(prompt string) (string, error) {
 	log.Printf("🤖 → Claude: %s", promptPreview)
 
 	reqBody := anthropicRequest{
-		Model:     "claude-3-5-sonnet-20241022",
+		Model:     "claude-3-5-haiku-20241022",
 		MaxTokens: 1000,
 		Messages: []message{
 			{
@@ -242,19 +242,3 @@ func (s *service) parseToolSelections(response string) ([]ToolSelection, error) 
 	return selections, nil
 }
 
-func (s *service) fallbackToolSelection(userInput string, availableTools []ToolDescriptor) ([]ToolSelection, error) {
-	log.Printf("🔧 Using fallback tool selection")
-	
-	if len(availableTools) == 0 {
-		log.Printf("❌ No tools available for fallback")
-		return []ToolSelection{}, nil
-	}
-	
-	selection := ToolSelection{
-		ToolName: availableTools[0].Name,
-		Reason:   "Fallback selection - first available tool",
-	}
-	
-	log.Printf("✅ Fallback selected: %s - %s", selection.ToolName, selection.Reason)
-	return []ToolSelection{selection}, nil
-}
