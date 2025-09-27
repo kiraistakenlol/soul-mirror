@@ -10,6 +10,8 @@ import (
 
 type Config struct {
 	AnthropicAPIKey string
+	OpenAIAPIKey    string
+	LLMProvider     string
 	Port            string
 	Environment     string
 }
@@ -21,6 +23,8 @@ func Load() *Config {
 
 	return &Config{
 		AnthropicAPIKey: os.Getenv("ANTHROPIC_API_KEY"),
+		OpenAIAPIKey:    os.Getenv("OPENAI_API_KEY"),
+		LLMProvider:     getEnv("LLM_PROVIDER", "anthropic"),
 		Port:            getEnv("PORT", "8080"),
 		Environment:     getEnv("ENVIRONMENT", "development"),
 	}
@@ -39,4 +43,19 @@ func (c *Config) IsProduction() bool {
 
 func (c *Config) HasAnthropicKey() bool {
 	return c.AnthropicAPIKey != ""
+}
+
+func (c *Config) HasOpenAIKey() bool {
+	return c.OpenAIAPIKey != ""
+}
+
+func (c *Config) HasLLMKey() bool {
+	switch c.LLMProvider {
+	case "openai":
+		return c.HasOpenAIKey()
+	case "anthropic":
+		return c.HasAnthropicKey()
+	default:
+		return false
+	}
 }
