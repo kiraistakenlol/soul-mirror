@@ -35,7 +35,7 @@ func (o *orchestrator) ProcessInput(input string) (*ProcessResponse, error) {
 	profileStart := time.Now()
 	profile, profileUpdate := o.updateAndGetProfile(input)
 	profileTime := time.Since(profileStart)
-	
+
 	tools := o.getAvailableTools()
 	selectionStart := time.Now()
 	selectedTools, err := o.selectTools(input, tools)
@@ -51,24 +51,32 @@ func (o *orchestrator) ProcessInput(input string) (*ProcessResponse, error) {
 func (o *orchestrator) updateAndGetProfile(input string) (string, ProfileUpdate) {
 	profileBefore := o.getProfileSafely()
 	lengthBefore := len(profileBefore)
-	
-	err := o.profileService.ProcessInput(input)
+
+	response, err := o.profileService.ProcessInput(input)
 	profileAfter := o.getProfileSafely()
 	lengthAfter := len(profileAfter)
-	
+
 	update := ProfileUpdate{
 		ProfileLengthBefore: lengthBefore,
 		ProfileLengthAfter:  lengthAfter,
 		Success:             err == nil,
 	}
-	
+
 	if err != nil {
 		log.Printf("Warning: Failed to process input for profile: %v", err)
 		update.ChangesMade = fmt.Sprintf("Failed to update profile: %v", err)
+		update.ExtractedTargets = []llm.ExtractionResult{}
 	} else {
-		update.ChangesMade = "Added user input to profile"
+		extractedCount := 0
+		for _, target := range response.ExtractedTargets {
+			if target.Found {
+				extractedCount++
+			}
+		}
+		update.ChangesMade = fmt.Sprintf("Extracted %d new insights and updated profile", extractedCount)
+		update.ExtractedTargets = response.ExtractedTargets
 	}
-	
+
 	return profileAfter, update
 }
 
@@ -109,7 +117,7 @@ func (o *orchestrator) executeTools(input string, toolSelections []llm.ToolSelec
 func (o *orchestrator) executeSingleTool(input string, selection llm.ToolSelection, context tools.Context) ToolExecution {
 	log.Printf("Orchestrator: Executing tool '%s' - Reason: %s", selection.ToolName, selection.Reason)
 	toolStart := time.Now()
-	
+
 	tool := o.toolService.GetTool(selection.ToolName)
 	if tool == nil {
 		log.Printf("Warning: Tool '%s' not found, skipping", selection.ToolName)
@@ -121,17 +129,17 @@ func (o *orchestrator) executeSingleTool(input string, selection llm.ToolSelecti
 			Error:         "Tool not found",
 		}
 	}
-	
+
 	toolResponse, err := tool.Execute(input, context)
 	status := "success"
 	errorMsg := ""
-	
+
 	if err != nil {
 		log.Printf("Warning: Tool '%s' execution failed: %v", selection.ToolName, err)
 		status = "error"
 		errorMsg = err.Error()
 	}
-	
+
 	return ToolExecution{
 		ToolName:      selection.ToolName,
 		Input:         input,

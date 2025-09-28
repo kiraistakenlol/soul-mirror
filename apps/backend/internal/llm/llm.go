@@ -2,12 +2,10 @@
 package llm
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"strings"
 
 	"github.com/kirillsobolev/soul-mirror/backend/internal/config"
@@ -15,70 +13,83 @@ import (
 
 type LLMService interface {
 	SelectTools(userInput string, availableTools []ToolDescriptor) ([]ToolSelection, error)
-	ProcessText(input string) (string, error)
+	UpdateProfile(userInput string, currentProfile string, extractionTargets []ExtractionTarget) (*ProfileExtractionResponse, error)
 }
 
 type service struct {
-	config *config.Config
-	client *http.Client
+	config   *config.Config
+	provider Provider
 }
 
 func NewService(cfg *config.Config) LLMService {
+	var provider Provider
+
 	switch cfg.LLMProvider {
 	case "openai":
 		if cfg.HasOpenAIKey() {
-			log.Println("✓ OpenAI client initialized")
+			provider = NewOpenAIProvider(
+				cfg.OpenAIAPIKey,
+				"gpt-5-nano", // Default model - $0.05/1M input, $0.40/1M output
+				"gpt-5-mini", // Advanced model - better performance, still cost-effective
+			)
+			log.Println("✓ OpenAI provider initialized")
 		} else {
 			log.Println("⚠️  No OpenAI API key - using fallback logic")
+			return &fallbackService{}
 		}
 	case "anthropic":
 		if cfg.HasAnthropicKey() {
-			log.Println("✓ Anthropic client initialized")
+			provider = NewAnthropicProvider(
+				cfg.AnthropicAPIKey,
+				"claude-3-5-haiku-20241022",  // Default model
+				"claude-3-5-sonnet-20241022", // Advanced model for profile operations
+			)
+			log.Println("✓ Anthropic provider initialized")
 		} else {
 			log.Println("⚠️  No Anthropic API key - using fallback logic")
+			return &fallbackService{}
 		}
 	default:
 		log.Printf("⚠️  Unknown LLM provider '%s' - using fallback logic", cfg.LLMProvider)
+		return &fallbackService{}
 	}
 
 	return &service{
-		config: cfg,
-		client: &http.Client{},
+		config:   cfg,
+		provider: provider,
 	}
 }
 
 func (s *service) SelectTools(userInput string, availableTools []ToolDescriptor) ([]ToolSelection, error) {
 	log.Printf("🔍 LLM Tool Selection for: '%s'", userInput)
 
-	if !s.config.HasLLMKey() {
-		log.Printf("⚠️  No API key - no tools selected")
-		return []ToolSelection{}, nil
-	}
-
-	log.Printf("📤 Asking %s to select from %d available tools", s.config.LLMProvider, len(availableTools))
+	log.Printf("📤 Asking %s to select from %d available tools", s.provider.GetName(), len(availableTools))
 	for _, tool := range availableTools {
 		log.Printf("   • %s: %s", tool.Name, tool.Description)
 	}
 
-	prompt := s.buildToolSelectionPrompt(userInput, availableTools)
-	response, err := s.callLLM(prompt)
+	toolsJSON, _ := json.MarshalIndent(availableTools, "", "  ")
+	userPrompt := fmt.Sprintf(ToolSelectionUserTemplate, userInput, string(toolsJSON))
+
+	// Tool selection doesn't need advanced model
+	response, err := s.provider.GenerateJSON(context.Background(), userPrompt, ToolSelectionSystemPrompt, false)
 	if err != nil {
-		log.Printf("❌ %s API error: %v", s.config.LLMProvider, err)
+		log.Printf("❌ %s API error: %v", s.provider.GetName(), err)
 		log.Printf("🔄 No tools selected due to API error")
 		return []ToolSelection{}, nil
 	}
 
 	selections, err := s.parseToolSelections(response)
 	if err != nil {
-		log.Printf("❌ Failed to parse %s response: %v", s.config.LLMProvider, err)
+		log.Printf("❌ Failed to parse %s response: %v", s.provider.GetName(), err)
 		log.Printf("🔄 No tools selected due to parsing error")
 		return []ToolSelection{}, nil
 	}
 
 	if len(selections) == 0 {
-		log.Printf("✅ %s decided no tools are needed for this input", s.config.LLMProvider)
+		log.Printf("✅ %s decided no tools are needed for this input", s.provider.GetName())
 	} else {
-		log.Printf("✅ %s selected %d tools:", s.config.LLMProvider, len(selections))
+		log.Printf("✅ %s selected %d tools:", s.provider.GetName(), len(selections))
 		for i, sel := range selections {
 			log.Printf("   %d. %s - %s", i+1, sel.ToolName, sel.Reason)
 		}
@@ -87,177 +98,65 @@ func (s *service) SelectTools(userInput string, availableTools []ToolDescriptor)
 	return selections, nil
 }
 
-func (s *service) ProcessText(input string) (string, error) {
-	log.Printf("📝 LLM Text Processing for: '%s'", input)
+func (s *service) UpdateProfile(userInput string, currentProfile string, extractionTargets []ExtractionTarget) (*ProfileExtractionResponse, error) {
+	log.Printf("🧠 LLM Profile Extraction for: '%s'", userInput)
 
-	if !s.config.HasLLMKey() {
-		log.Printf("⚠️  No API key - using simple processing")
-		response := "Processed (no LLM): " + input
-		return response, nil
-	}
+	// Profile operations use advanced model for better quality
 
-	log.Printf("📤 Sending to %s for processing...", s.config.LLMProvider)
-	prompt := fmt.Sprintf("Process and improve this user input for a personal intelligence system: %s", input)
-	response, err := s.callLLM(prompt)
+	// Step 1: Extract structured data
+	log.Printf("📤 Step 1: Extracting structured data from input...")
+	extractionResults, err := s.extractStructuredData(userInput, currentProfile, extractionTargets)
 	if err != nil {
-		log.Printf("❌ %s API error: %v", s.config.LLMProvider, err)
-		return "Processed (API error): " + input, nil
+		log.Printf("❌ %s extraction error: %v", s.provider.GetName(), err)
+		return &ProfileExtractionResponse{
+			UpdatedProfile:   currentProfile,
+			ExtractedTargets: []ExtractionResult{},
+		}, nil
 	}
 
-	log.Printf("✅ %s response: '%s'", s.config.LLMProvider, response)
-	return response, nil
-}
-
-type anthropicRequest struct {
-	Model     string    `json:"model"`
-	MaxTokens int       `json:"max_tokens"`
-	Messages  []message `json:"messages"`
-}
-
-type openaiRequest struct {
-	Model     string    `json:"model"`
-	MaxTokens int       `json:"max_tokens"`
-	Messages  []message `json:"messages"`
-}
-
-type message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type anthropicResponse struct {
-	Content []content `json:"content"`
-}
-
-type openaiResponse struct {
-	Choices []choice `json:"choices"`
-}
-
-type choice struct {
-	Message message `json:"message"`
-}
-
-type content struct {
-	Text string `json:"text"`
-}
-
-func (s *service) callLLM(prompt string) (string, error) {
-	switch s.config.LLMProvider {
-	case "openai":
-		return s.callOpenAI(prompt)
-	case "anthropic":
-		return s.callAnthropic(prompt)
-	default:
-		return "", fmt.Errorf("unsupported LLM provider: %s", s.config.LLMProvider)
-	}
-}
-
-func (s *service) callAnthropic(prompt string) (string, error) {
-	promptPreview := prompt
-	if len(prompt) > 200 {
-		promptPreview = prompt[:200] + "..."
-	}
-	log.Printf("🤖 → Claude: %s", promptPreview)
-
-	reqBody := anthropicRequest{
-		Model:     "claude-3-5-haiku-20241022",
-		MaxTokens: 1000,
-		Messages: []message{
-			{
-				Role:    "user",
-				Content: prompt,
-			},
-		},
+	// Check if any new information was found
+	hasNewInfo := false
+	for _, result := range extractionResults {
+		if result.Found {
+			hasNewInfo = true
+			break
+		}
 	}
 
-	reqJSON, err := json.Marshal(reqBody)
-	if err != nil {
-		return "", err
+	// Step 2: Blend into natural description
+	var updatedProfile string
+	if hasNewInfo {
+		log.Printf("📤 Step 2: Blending extracted data into profile...")
+		updatedProfile, err = s.blendIntoProfile(currentProfile, extractionResults)
+		if err != nil {
+			log.Printf("❌ %s blending error: %v", s.provider.GetName(), err)
+			return &ProfileExtractionResponse{
+				UpdatedProfile:   currentProfile,
+				ExtractedTargets: extractionResults,
+			}, nil
+		}
+	} else {
+		log.Printf("✅ No new information found, keeping profile unchanged")
+		updatedProfile = currentProfile
 	}
 
-	req, err := http.NewRequest("POST", "https://api.anthropic.com/v1/messages", bytes.NewBuffer(reqJSON))
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-api-key", s.config.AnthropicAPIKey)
-	req.Header.Set("anthropic-version", "2023-06-01")
-
-	log.Printf("📡 Making API call to Anthropic...")
-	resp, err := s.client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	log.Printf("📡 Response status: %d", resp.StatusCode)
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		log.Printf("❌ API Error Response: %s", string(body))
-		return "", fmt.Errorf("API error %d: %s", resp.StatusCode, string(body))
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	var anthropicResp anthropicResponse
-	if err := json.Unmarshal(body, &anthropicResp); err != nil {
-		log.Printf("❌ Failed to parse response: %s", string(body))
-		return "", err
-	}
-
-	if len(anthropicResp.Content) == 0 {
-		return "", fmt.Errorf("empty response from Anthropic")
-	}
-
-	responseText := anthropicResp.Content[0].Text
-	respPreview := responseText
-	if len(responseText) > 300 {
-		respPreview = responseText[:300] + "..."
-	}
-	log.Printf("🤖 ← Claude: %s", respPreview)
-
-	return responseText, nil
-}
-
-func (s *service) buildToolSelectionPrompt(userInput string, tools []ToolDescriptor) string {
-	toolsJSON, _ := json.MarshalIndent(tools, "", "  ")
-
-	return fmt.Sprintf(`Given this user input: "%s"
-
-Available tools:
-%s
-
-Return a JSON array of tool selections with this format:
-[
-  {
-    "tool_name": "tool_name",
-    "reason": "explanation for why this tool was selected"
-  }
-]
-
-IMPORTANT GUIDELINES:
-- Most inputs don't need any tools - return empty array [] in these cases
-- Only select tools when the user explicitly asks for functionality that matches a tool
-- Don't select tools just because they might be loosely related to the input
-- Expressions of feelings, thoughts, or general statements rarely need tools
-- When in doubt, prefer no tools over unnecessary tools
-- Maximum 2 tools per input to keep responses focused`, userInput, string(toolsJSON))
+	log.Printf("✅ %s profile extraction completed", s.provider.GetName())
+	return &ProfileExtractionResponse{
+		UpdatedProfile:   updatedProfile,
+		ExtractedTargets: extractionResults,
+	}, nil
 }
 
 func (s *service) parseToolSelections(response string) ([]ToolSelection, error) {
-	startIdx := strings.Index(response, "[")
-	endIdx := strings.LastIndex(response, "]")
+	responseText := response
+	startIdx := strings.Index(responseText, "[")
+	endIdx := strings.LastIndex(responseText, "]")
 
 	if startIdx == -1 || endIdx == -1 {
 		return nil, fmt.Errorf("no JSON array found in response")
 	}
 
-	jsonStr := response[startIdx : endIdx+1]
+	jsonStr := responseText[startIdx : endIdx+1]
 
 	var rawSelections []struct {
 		ToolName string `json:"tool_name"`
@@ -279,73 +178,107 @@ func (s *service) parseToolSelections(response string) ([]ToolSelection, error) 
 	return selections, nil
 }
 
-func (s *service) callOpenAI(prompt string) (string, error) {
-	promptPreview := prompt
-	if len(prompt) > 200 {
-		promptPreview = prompt[:200] + "..."
+func (s *service) extractStructuredData(userInput string, currentProfile string, extractionTargets []ExtractionTarget) ([]ExtractionResult, error) {
+	if currentProfile == "" {
+		return s.extractFromEmptyProfile(userInput, extractionTargets)
 	}
-	log.Printf("🤖 → OpenAI: %s", promptPreview)
+	return s.extractWithProfileComparison(userInput, currentProfile, extractionTargets)
+}
 
-	reqBody := openaiRequest{
-		Model:     "gpt-4.1-nano",
-		MaxTokens: 1000,
-		Messages: []message{
-			{
-				Role:    "user",
-				Content: prompt,
-			},
-		},
-	}
+func (s *service) extractFromEmptyProfile(userInput string, extractionTargets []ExtractionTarget) ([]ExtractionResult, error) {
+	targetsJSON, _ := json.MarshalIndent(extractionTargets, "", "  ")
+	userPrompt := fmt.Sprintf(ProfileExtractionEmptyTemplate, userInput, string(targetsJSON))
 
-	reqJSON, err := json.Marshal(reqBody)
+	// Use advanced model for profile extraction
+	response, err := s.provider.GenerateJSON(context.Background(), userPrompt, ProfileExtractionSystemPrompt, true)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqJSON))
+	return s.parseExtractionResults(response, extractionTargets)
+}
+
+func (s *service) extractWithProfileComparison(userInput string, currentProfile string, extractionTargets []ExtractionTarget) ([]ExtractionResult, error) {
+	targetsJSON, _ := json.MarshalIndent(extractionTargets, "", "  ")
+	userPrompt := fmt.Sprintf(ProfileExtractionComparisonTemplate, currentProfile, userInput, string(targetsJSON))
+
+	// Use advanced model for profile extraction
+	response, err := s.provider.GenerateJSON(context.Background(), userPrompt, ProfileExtractionSystemPrompt, true)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+s.config.OpenAIAPIKey)
+	return s.parseExtractionResults(response, extractionTargets)
+}
 
-	log.Printf("📡 Making API call to OpenAI...")
-	resp, err := s.client.Do(req)
+func (s *service) blendIntoProfile(currentProfile string, extractionResults []ExtractionResult) (string, error) {
+	// Build extracted data summary
+	extractedData := ""
+	for _, result := range extractionResults {
+		if result.Found && result.Content != "" {
+			extractedData += fmt.Sprintf("- %s: %s\n", result.TargetName, result.Content)
+		}
+	}
+
+	if extractedData == "" {
+		return currentProfile, nil
+	}
+
+	var prompt string
+	if currentProfile == "" {
+		// Create new profile
+		prompt = fmt.Sprintf(ProfileBlendingNewTemplate, extractedData)
+	} else {
+		// Update existing profile
+		prompt = fmt.Sprintf(ProfileBlendingUpdateTemplate, currentProfile, extractedData)
+	}
+
+	// Use advanced model for profile blending
+	response, err := s.provider.GenerateText(context.Background(), prompt, ProfileBlendingSystemPrompt, true)
 	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	log.Printf("📡 Response status: %d", resp.StatusCode)
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		log.Printf("❌ API Error Response: %s", string(body))
-		return "", fmt.Errorf("API error %d: %s", resp.StatusCode, string(body))
+		return currentProfile, err
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
+	return strings.TrimSpace(response), nil
+}
+
+func (s *service) parseExtractionResults(response string, extractionTargets []ExtractionTarget) ([]ExtractionResult, error) {
+	startIdx := strings.Index(response, "[")
+	endIdx := strings.LastIndex(response, "]")
+
+	if startIdx == -1 || endIdx == -1 {
+		return nil, fmt.Errorf("no JSON array found in response")
 	}
 
-	var openaiResp openaiResponse
-	if err := json.Unmarshal(body, &openaiResp); err != nil {
-		log.Printf("❌ Failed to parse response: %s", string(body))
-		return "", err
+	jsonStr := response[startIdx : endIdx+1]
+
+	var rawResults []struct {
+		TargetName string `json:"target_name"`
+		Content    string `json:"content"`
+		Found      bool   `json:"found"`
 	}
 
-	if len(openaiResp.Choices) == 0 {
-		return "", fmt.Errorf("empty response from OpenAI")
+	if err := json.Unmarshal([]byte(jsonStr), &rawResults); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON: %v", err)
 	}
 
-	responseText := openaiResp.Choices[0].Message.Content
-	respPreview := responseText
-	if len(responseText) > 300 {
-		respPreview = responseText[:300] + "..."
-	}
-	log.Printf("🤖 ← OpenAI: %s", respPreview)
+	results := make([]ExtractionResult, len(extractionTargets))
+	for i, target := range extractionTargets {
+		results[i] = ExtractionResult{
+			TargetName: target.Name,
+			Content:    "",
+			Found:      false,
+		}
 
-	return responseText, nil
+		// Find matching result from LLM response
+		for _, raw := range rawResults {
+			if raw.TargetName == target.Name {
+				results[i].Content = raw.Content
+				results[i].Found = raw.Found
+				break
+			}
+		}
+	}
+
+	return results, nil
 }

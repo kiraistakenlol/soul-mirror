@@ -38,11 +38,12 @@ type ToolExecution struct {
 }
 
 type ProfileUpdate struct {
-	ChangesMade         string `json:"changes_made"`
-	ProfileLengthBefore int    `json:"profile_length_before"`
-	ProfileLengthAfter  int    `json:"profile_length_after"`
-	ProcessingTime      string `json:"processing_time"`
-	Success             bool   `json:"success"`
+	ChangesMade         string                     `json:"changes_made"`
+	ProfileLengthBefore int                        `json:"profile_length_before"`
+	ProfileLengthAfter  int                        `json:"profile_length_after"`
+	ExtractedTargets    []llm.ExtractionResult `json:"extracted_targets"`
+	ProcessingTime      string                     `json:"processing_time"`
+	Success             bool                       `json:"success"`
 }
 
 type ProcessMetadata struct {

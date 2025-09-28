@@ -34,11 +34,11 @@ func main() {
 		log.Printf("  - %s: %s", tool.Name(), tool.Description())
 	}
 
-	profileService := profile.NewService()
-	log.Println("✓ Profile service initialized")
-
 	llmService := llm.NewService(cfg)
 	log.Println("✓ LLM service initialized")
+
+	profileService := profile.NewService(llmService)
+	log.Println("✓ Profile service initialized")
 
 	orch := orchestrator.New(toolService, profileService, llmService)
 	log.Println("✓ Orchestrator initialized")
