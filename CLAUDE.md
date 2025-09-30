@@ -85,9 +85,10 @@ apps/backend/
 ├── agent.py             # LangChain personal assistant agent
 ├── tools/
 │   └── notes.py         # Notes management tool
+├── scripts/
+│   └── dev.sh           # Development server script
 ├── requirements.txt     # Python dependencies
-├── .env                 # Environment configuration
-└── run.sh              # Development server script
+└── .env                 # Environment configuration
 ```
 
 #### Tech Stack
