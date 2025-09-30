@@ -4,21 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Long-term Vision
 
-**Soul Mirror** is a personal intelligence system that learns who you are through your thoughts and helps you become who you want to be.
+**Soul Mirror** is a personal assistant that learns who you are through your thoughts and notes, building deep understanding over time.
 
-**Core Experience:**
-- Capture fleeting thoughts via voice messages on your phone (WhatsApp/Telegram)
-- System automatically understands what type of content it is
-- Builds a living profile of your personality, interests, goals, and growth areas
-- Provides contextual reminders and suggestions at the right moments
-- Becomes your personal assistant that truly knows you
+**Core Approach:**
+The agent works like a real human assistant with a notebook - it remembers everything about you and organizes information naturally through experience. Uses a single notes system where everything lives together, building understanding through interaction patterns rather than rigid categorization.
 
 **Key Capabilities:**
-- **Personal Profiling**: Understands your values, interests, communication style, and behavioral patterns
-- **Intelligent Categorization**: Distinguishes between self-reflection, actionable ideas, tasks, and random thoughts  
-- **Proactive Assistance**: Reminds you of self-improvement goals before important situations
-- **Idea Management**: Captures and organizes your creative thoughts for later action
-- **Contextual Intelligence**: Uses your calendar, location, and profile to provide relevant suggestions
+- **Memory Management**: Uses notes as primary memory system, like a human assistant's notebook
+- **Natural Learning**: Automatically updates understanding of your personality, interests, and preferences through interactions
+- **Contextual Intelligence**: References what it knows about you to provide more personalized responses
+- **Emergent Organization**: Develops its own organizational systems over time rather than using pre-defined categories
 
 ## Project Rules
 
@@ -30,21 +25,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - follow DRY(don't repeat yourself principle) - always try to break complex compoents into smaller reusable parts with clear signatures
 - avoid redundancy
 - every component in the system should have a concise comment explaining what it does (not how it will be used)
-- minimalism in code and docs (no redundant descriptions, no obvious comments, no unnecessary formatting) - but be expressive in logs and script output for clarity. examples: 
-    - ✅ `go`
-    - ❌ `**Go**: Backend development language`
+- minimalism in code and docs (no redundant descriptions, no obvious comments, no unnecessary formatting) - but be expressive in logs and script output for clarity. examples:
+    - ✅ `python`
+    - ❌ `**Python**: Backend development language`
     - ✅ `type: string`
     - ❌ `type: string (enum)`
     - ✅ Simple variable names when context is clear
     - ❌ Long descriptive names that repeat context
     - ✅ `echo "✓ Build successful"` in scripts (expressive for debugging)
-    - ✅ `fmt.Println("Server starting on :8080")` (helpful log)
+    - ✅ `print("Server starting on :8080")` (helpful log)
 - remove dead code immediately - when changing behavior, completely remove old methods/functions rather than leaving them unused or simplified. no fallback methods that just return empty values
 
 ## Modules
 
-### Backend
-
+### Backend (Python/LangChain)
 
 apps/backend
 
@@ -52,26 +46,15 @@ apps/backend
 
 ##### High-Level Components
 
-**LLM Orchestrator:**
-- Coordinates workflow between all services
-- Processes user input and returns combined responses
-- Handles multiple tool execution with error handling
+**LangChain Agent:**
+- Personal assistant that uses notes as primary memory system
+- Automatically considers context from notes before responding
+- Updates understanding through natural interaction patterns
 
-**LLM Service:**
-- Configurable LLM provider (Anthropic Claude Haiku or OpenAI GPT-4.1-nano)
-- JSON-based tool selection with reasoning
-- Text processing capabilities
-
-**Tool Service:**
-- Registry of available tools (time, random, etc.)
-- Each tool has name, description, and execute method with context
-- Tools receive user profile as context for personalized responses
-- Extensible for adding new capabilities
-
-**Profile Service:**
-- Simple plain text profile storage
-- Automatically learns from user input
-- Single-user MVP design
+**Notes Tool:**
+- Single unified notes system for all information
+- Agent organizes information naturally like a human assistant
+- Stores personality insights, preferences, and context together
 
 ##### System Flow
 
@@ -83,119 +66,58 @@ apps/backend
              │
              ▼
     ┌─────────────────┐
-    │ LLM Orchestrator│
+    │ Personal Agent  │
+    │  (LangChain)    │
     └────────┬────────┘
              │
-       ┌─────┼─────┐
-       │     │     │
-       ▼     ▼     ▼
-  ┌───────┐ ┌───────┐ ┌───────┐
-  │  LLM  │ │ Tool  │ │Profile│
-  │Service│ │Service│ │Service│
-  └───────┘ └───────┘ └───────┘
+             ▼
+    ┌─────────────────┐
+    │   Notes Tool    │
+    │ (unified memory)│
+    └─────────────────┘
 ```
 
 #### Directory Structure
 
 ```
 apps/backend/
-├── cmd/server/
-│   └── main.go
-├── internal/
-│   ├── api/
-│   ├── config/
-│   │   └── config.go
-│   ├── handlers/
-│   │   ├── process/
-│   │   ├── profile/
-│   │   ├── status/
-│   │   └── tools/
-│   ├── llm/
-│   │   ├── llm.go
-│   │   └── types.go
-│   ├── logging/
-│   ├── orchestrator/
-│   │   ├── orchestrator.go
-│   │   └── types.go
-│   ├── tools/
-│   │   ├── registry.go
-│   │   ├── context.go
-│   │   ├── time.go
-│   │   └── random.go
-│   ├── profile/
-│   │   ├── profile.go
-│   │   └── mock.go
-│   └── server/
-│       └── server.go
-└── scripts/
-    ├── build.sh
-    ├── check-all.sh
-    ├── check-format.sh
-    ├── dev.sh
-    ├── format.sh
-    └── vet.sh
+├── main.py              # FastAPI entry point
+├── agent.py             # LangChain personal assistant agent
+├── tools/
+│   └── notes.py         # Notes management tool
+├── requirements.txt     # Python dependencies
+├── .env                 # Environment configuration
+└── run.sh              # Development server script
 ```
+
 #### Tech Stack
 
-- go (1.23.0)
-- air (hot reload)
-- gin (HTTP framework)
-- slog (structured logging)
-- github.com/joho/godotenv (environment configuration)
-- Anthropic Claude Haiku API / OpenAI GPT-4.1-nano API
+- python (3.9+)
+- langchain (agent framework)
+- langchain-anthropic / langchain-openai (LLM providers)
+- fastapi (API framework)
+- uvicorn (ASGI server)
+- pydantic (data validation)
 
 #### API Endpoints
 
 All endpoints prefixed with `/api` and return JSON:
 
 - `GET /api/status` - System status and health
-- `GET /api/process?input=text` - Process input with JSON response (tool_selection_result, tool_executions, profile_update)
-- `GET /api/profile` - Get current profile
-- `GET /api/tools` - List available tools
-
-#### Key Interfaces
-
-**LLMService:**
-```go
-type ToolSelection struct {
-    ToolName string
-    Reason   string
-}
-
-SelectTools(input string, tools []ToolDescriptor) ([]ToolSelection, error)
-```
-
-**ToolService:**
-```go
-ListTools() []Tool
-GetTool(name string) Tool
-```
-
-**Tool:**
-```go
-Execute(input string, context Context) (string, error)
-Name() string
-Description() string
-```
-
-**ProfileService:**
-```go
-Get() (string, error)
-ProcessInput(input string) error
-```
-
-**Orchestrator:**
-```go
-ProcessInput(input string) (*ProcessResponse, error)
-```
+- `GET /api/process?input=text` - Process input with personal assistant response
+- `POST /api/process` - Process input (JSON body)
 
 #### Development Commands
 
 ```bash
-./scripts/build.sh
-./scripts/check-all.sh
-./scripts/format.sh
-./scripts/vet.sh
+# Install dependencies
+pip install -r requirements.txt
+
+# Run server (with hot reload)
+python main.py
+
+# Or use uvicorn directly
+uvicorn main:app --reload --port 8080
 ```
 
 #### Configuration
@@ -212,3 +134,4 @@ Setup:
 cp .env.example .env
 # Set LLM_PROVIDER and add corresponding API key
 ```
+

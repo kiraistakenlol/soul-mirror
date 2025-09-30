@@ -1,1 +1,1 @@
-profile service is done, let's think how to feed in all the jottings that i ahve and categorize it.
+migration to pytnoh and lang chain, the pytnhon backend can add a note by request and retrieve it!

@@ -1,9 +1,0 @@
-# Environment variables
-.env
-
-# Build artifacts
-tmp/
-*.log
-
-# Go build cache
-.cache/
