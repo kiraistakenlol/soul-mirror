@@ -23,6 +23,24 @@
                 "commands": [
                     "cd apps/backend && ./scripts/dev.sh"
                 ]
+            },
+            {
+                "name": "Test Runner",
+                "autoExecuteCommands": true,
+                "icon": "beaker",
+                "color": "terminal.ansiYellow",
+                "commands": [
+                    "cd apps/test-runner && ./scripts/dev.sh"
+                ]
+            },
+            {
+                "name": "Frontend",
+                "autoExecuteCommands": true,
+                "icon": "browser",
+                "color": "terminal.ansiBlue",
+                "commands": [
+                    "cd apps/frontend-new && ./scripts/dev.sh"
+                ]
             }
         ]
     }

@@ -1,0 +1,66 @@
+[
+  {
+    "name": "Base extraction",
+    "inputs": [
+      "I love surfing"
+    ],
+    "profileExpectations": "Mentions user loves surfing"
+  },
+  {
+    "name": "Contradiction handling",
+    "inputs": [
+      "I love coffee",
+      "Actually, I don't like coffee anymore"
+    ],
+    "profileExpectations": "Does NOT mention loving coffee. Indicates user no longer likes coffee or doesn't like coffee"
+  },
+  {
+    "name": "Duplicate detection",
+    "inputs": [
+      "I enjoy playing guitar",
+      "I also love hiking",
+      "Guitar is my favorite hobby"
+    ],
+    "profileExpectations": "Mentions guitar and hiking. Does NOT have duplicate information about guitar - guitar mentioned only once"
+  },
+  {
+    "name": "Multi extraction",
+    "inputs": [
+      "I'm learning Spanish",
+      "I live in Barcelona",
+      "What languages do you think I should focus on?"
+    ],
+    "profileExpectations": "Mentions learning Spanish and living in Barcelona"
+  },
+  {
+    "name": "Profile vs task separation",
+    "inputs": [
+      "I'm a software engineer",
+      "Remind me to call mom tomorrow",
+      "I value work-life balance"
+    ],
+    "profileExpectations": "Mentions being a software engineer and valuing work-life balance. Does NOT contain reminder about calling mom"
+  },
+  {
+    "name": "Update without contradiction",
+    "inputs": [
+      "I love surfing",
+      "I especially love surfing in winter"
+    ],
+    "profileExpectations": "Mentions loving surfing and winter surfing preference. Information should be combined or enhanced, not duplicated"
+  },
+  {
+    "name": "Implicit extraction",
+    "inputs": [
+      "I'm vegan, so I can't eat that"
+    ],
+    "profileExpectations": "Mentions user is vegan"
+  },
+  {
+    "name": "Negation extraction",
+    "inputs": [
+      "I'm not a morning person"
+    ],
+    "profileExpectations": "Mentions user is not a morning person or dislikes mornings"
+  }
+]

@@ -1,9 +1,9 @@
 #!/bin/bash
-# Run the Python backend server
+# Run the test-runner server
 
-# Get the backend directory (parent of scripts)
-BACKEND_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$BACKEND_DIR"
+# Get the test-runner directory (parent of scripts)
+TEST_RUNNER_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$TEST_RUNNER_DIR"
 
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
@@ -19,6 +19,6 @@ echo "Installing dependencies..."
 pip install -r requirements.txt
 
 # Run the server
-echo "Starting Soul Mirror backend on port 8080..."
-export PYTHONPATH="$BACKEND_DIR"
-uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+echo "Starting test-runner on port 8081..."
+export PYTHONPATH="$TEST_RUNNER_DIR"
+uvicorn main:app --host 0.0.0.0 --port 8081 --reload

@@ -30,12 +30,12 @@ agent = Agent()
 # Request/Response models
 class ProcessRequest(BaseModel):
     input: str
-    thread_id: Optional[str] = "default"
+    user_id: Optional[str] = "default"
 
 class ProcessResponse(BaseModel):
     input: str
     response: str
-    thread_id: str
+    user_id: str
 
 # API Endpoints
 @app.get("/api/status")
@@ -49,14 +49,14 @@ def get_status():
     }
 
 @app.get("/api/process")
-def process_get(input: str, thread_id: str = "default"):
+def process_get(input: str, user_id: str = "default"):
     """Process input via GET request"""
     try:
-        response = agent.process_input(input, thread_id)
+        response = agent.process_input(input, user_id)
         return ProcessResponse(
             input=input,
             response=response,
-            thread_id=thread_id
+            user_id=user_id
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -65,38 +65,86 @@ def process_get(input: str, thread_id: str = "default"):
 def process_post(request: ProcessRequest):
     """Process input via POST request"""
     try:
-        response = agent.process_input(request.input, request.thread_id)
+        response = agent.process_input(request.input, request.user_id)
         return ProcessResponse(
             input=request.input,
             response=response,
-            thread_id=request.thread_id
+            user_id=request.user_id
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/notes")
-def get_notes():
-    """Get all notes directly (bypass agent)"""
+def get_notes(user_id: str = "default"):
+    """Get all notes for a user"""
+    user_notes = notes_manager._get_user_notes(user_id)
     return {
-        "notes": notes_manager.notes,
-        "count": len(notes_manager.notes)
+        "notes": user_notes,
+        "count": len(user_notes),
+        "user_id": user_id
     }
 
 @app.get("/api/profile")
-def get_profile():
-    """Get user profile from profile notes (bypass agent)"""
-    profile_notes = {}
-    
-    # Search for notes with [PROFILE] prefix
-    for note_id, note in notes_manager.notes.items():
+def get_profile(user_id: str = "default"):
+    """Get user profile from profile notes as concatenated string"""
+    user_notes = notes_manager._get_user_notes(user_id)
+    profile_items = []
+
+    # Extract and clean profile notes
+    for note_id, note in user_notes.items():
         content = note.get("content", "")
         if content.startswith("[PROFILE]"):
-            profile_notes[note_id] = note
-    
+            # Remove [PROFILE] prefix and strip whitespace
+            cleaned = content.replace("[PROFILE]", "").strip()
+            profile_items.append(cleaned)
+
+    # Concatenate into single string
+    profile_string = "; ".join(profile_items) if profile_items else ""
+
     return {
-        "profile_notes": profile_notes,
-        "count": len(profile_notes),
-        "summary": "Profile information extracted from notes with [PROFILE] prefix"
+        "profile": profile_string,
+        "count": len(profile_items),
+        "user_id": user_id
+    }
+
+@app.get("/api/profiles")
+def get_all_profiles():
+    """Get all user profiles"""
+    all_profiles = []
+
+    for user_id in notes_manager.user_notes.keys():
+        user_notes = notes_manager._get_user_notes(user_id)
+        profile_items = []
+
+        # Extract and clean profile notes
+        for _, note in user_notes.items():
+            content = note.get("content", "")
+            if content.startswith("[PROFILE]"):
+                cleaned = content.replace("[PROFILE]", "").strip()
+                profile_items.append(cleaned)
+
+        profile_string = "; ".join(profile_items) if profile_items else ""
+
+        all_profiles.append({
+            "user_id": user_id,
+            "profile": profile_string,
+            "profile_count": len(profile_items),
+            "total_notes": len(user_notes)
+        })
+
+    return {
+        "profiles": all_profiles,
+        "count": len(all_profiles)
+    }
+
+@app.get("/api/reset")
+def reset_user(user_id: str = "default"):
+    """Reset all notes for a user"""
+    notes_manager.reset_user(user_id)
+    return {
+        "status": "success",
+        "user_id": user_id,
+        "message": f"All notes cleared for user {user_id}"
     }
 
 
