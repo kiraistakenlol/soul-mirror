@@ -6,6 +6,7 @@ import NotesList from './NotesList';
 import ResponseDisplay from './ResponseDisplay';
 import ChatInput from './ChatInput';
 import Tools from './Tools';
+import ConversationHistory from './ConversationHistory';
 
 export default function MainView() {
   const [latestResponse, setLatestResponse] = useState(null);
@@ -13,8 +14,9 @@ export default function MainView() {
   return (
     <>
       <main className="max-w-7xl mx-auto p-6 pb-48">
-        <div className="mb-6">
+        <div className="mb-6 space-y-4">
           <Tools />
+          <ConversationHistory />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

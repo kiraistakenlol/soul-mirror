@@ -84,6 +84,10 @@ class ApiService {
   async resetConversation() {
     return this.request('/api/reset-conversation');
   }
+
+  async getConversationHistory() {
+    return this.request('/api/conversation-history');
+  }
 }
 
 export default new ApiService();

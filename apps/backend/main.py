@@ -174,6 +174,26 @@ def reset_conversation(user_id: str = "default"):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/conversation-history")
+def get_conversation_history(user_id: str = "default"):
+    """Get current conversation history for debugging"""
+    history = agent.conversation_history.get(user_id, [])
+
+    messages = []
+    for msg in history:
+        msg_type = type(msg).__name__
+        content = getattr(msg, "content", str(msg))
+        messages.append({
+            "type": msg_type,
+            "content": content
+        })
+
+    return {
+        "user_id": user_id,
+        "message_count": len(messages),
+        "messages": messages
+    }
+
 
 @app.get("/api/tools")
 def get_tools():

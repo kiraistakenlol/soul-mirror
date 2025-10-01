@@ -18,9 +18,10 @@ export default function ChatInput({ onResponse }) {
       onResponse(data);
       setInput('');
 
-      // Refresh profile and notes
+      // Refresh profile, notes, and history
       window.refreshProfile?.();
       window.refreshNotes?.();
+      window.refreshHistory?.();
     } catch (error) {
       onResponse({ error: error.message });
     } finally {
@@ -39,9 +40,10 @@ export default function ChatInput({ onResponse }) {
         input: "Reset conversation"
       });
 
-      // Refresh profile and notes to show the new Conversations note
+      // Refresh profile, notes, and history
       window.refreshProfile?.();
       window.refreshNotes?.();
+      window.refreshHistory?.();
     } catch (error) {
       onResponse({ error: error.message });
     } finally {
