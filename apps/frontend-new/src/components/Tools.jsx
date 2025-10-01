@@ -21,30 +21,26 @@ export default function Tools() {
   }
 
   return (
-    <div className="bg-gray-900 rounded-lg p-4">
+    <div className="bg-gray-900 rounded-lg border border-gray-800">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between text-left hover:bg-gray-800 rounded p-2 transition-colors"
+        className="w-full flex items-center justify-between text-left hover:bg-gray-800/50 rounded p-3 transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🛠️</span>
-          <h3 className="text-sm font-semibold text-white">
-            Available Tools <span className="text-gray-500">({tools.length})</span>
-          </h3>
+        <div className="flex items-center gap-3">
+          <span className="text-lg">{expanded ? '▼' : '▶'}</span>
+          <span className="text-xl">🛠️</span>
+          <span className="text-sm text-gray-300 font-medium">Tools ({tools.length})</span>
         </div>
-        <span className="text-gray-400 text-xs">
-          {expanded ? '▼' : '▶'}
-        </span>
       </button>
 
       {expanded && (
-        <div className="mt-3 space-y-2 pl-8">
+        <div className="p-3 pt-0 space-y-2 border-t border-gray-800">
           {tools.map((tool, idx) => (
-            <div key={idx} className="bg-gray-800 rounded p-3 text-xs">
-              <div className="font-mono text-blue-400 mb-1">{tool.name}</div>
+            <div key={idx} className="bg-gray-800 rounded p-3 text-sm">
+              <div className="font-mono text-blue-400 mb-1 font-semibold">{tool.name}</div>
               <div className="text-gray-400 mb-1">{tool.description}</div>
               {tool.parameters && (
-                <div className="text-gray-500 font-mono text-[10px]">
+                <div className="text-gray-500 font-mono text-xs">
                   ({tool.parameters.join(', ')})
                 </div>
               )}

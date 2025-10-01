@@ -1,48 +1,48 @@
-// User profile display
+// Profile display with auto-refresh
 
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 
 export default function Profile() {
   const [profile, setProfile] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
     loadProfile();
+    const interval = setInterval(loadProfile, 10000);
+
+    window.refreshProfile = loadProfile;
+
+    return () => {
+      clearInterval(interval);
+      delete window.refreshProfile;
+    };
   }, []);
 
   async function loadProfile() {
     try {
-      setLoading(true);
       const data = await api.getProfile();
-      setProfile(data.profile || 'No profile information yet. Start sharing your thoughts to build your profile.');
-    } catch {
-      setProfile('Failed to load profile');
-    } finally {
-      setLoading(false);
+      setProfile(data.profile);
+      setCount(data.count);
+    } catch (error) {
+      console.error('Failed to load profile:', error);
     }
   }
 
-  // Refresh profile when needed (expose via ref or context)
-  useEffect(() => {
-    window.refreshProfile = loadProfile;
-    return () => delete window.refreshProfile;
-  }, []);
-
   return (
-    <div className="bg-gray-900 rounded-lg p-6 h-full">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-xl">🧠</span>
-        <h2 className="text-lg font-semibold text-white">Your Profile</h2>
+    <div className="h-full flex flex-col">
+      <div className="px-4 py-3 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="text-xl">🧠</span>
+          <span className="text-sm text-gray-300 font-medium">Profile ({count})</span>
+        </div>
       </div>
 
-      <div className="bg-gray-800 border-l-4 border-blue-500 rounded p-4 max-h-[calc(100vh-200px)] overflow-y-auto">
-        {loading ? (
-          <div className="text-gray-400 text-sm">Loading profile...</div>
+      <div className="px-4 pb-3 flex-1 overflow-y-auto">
+        {profile ? (
+          <p className="text-sm text-gray-400 leading-relaxed">{profile}</p>
         ) : (
-          <pre className="text-gray-300 text-sm whitespace-pre-wrap font-sans leading-relaxed">
-            {profile}
-          </pre>
+          <p className="text-sm text-gray-600 italic">No profile information yet.</p>
         )}
       </div>
     </div>

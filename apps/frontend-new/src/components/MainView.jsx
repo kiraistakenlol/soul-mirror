@@ -1,43 +1,38 @@
 // Main application view with profile, notes, and chat
 
-import { useState } from 'react';
 import Profile from './Profile';
 import NotesList from './NotesList';
-import ResponseDisplay from './ResponseDisplay';
 import ChatInput from './ChatInput';
-import Tools from './Tools';
 import ConversationHistory from './ConversationHistory';
 
 export default function MainView() {
-  const [latestResponse, setLatestResponse] = useState(null);
-
   return (
-    <>
-      <main className="max-w-7xl mx-auto p-6 pb-48">
-        <div className="mb-6 space-y-4">
-          <Tools />
+    <div className="h-full flex overflow-hidden">
+      {/* Left column: Notes + Input */}
+      <div className="flex-1 flex flex-col border-r border-gray-800">
+        {/* Notes - takes remaining space */}
+        <div className="flex-1 overflow-y-auto">
+          <NotesList />
+        </div>
+
+        {/* Input - fixed at bottom of notes column */}
+        <div className="flex-shrink-0">
+          <ChatInput />
+        </div>
+      </div>
+
+      {/* Right sidebar (30%) - Profile, Conversation */}
+      <div className="w-[30%] flex flex-col bg-gray-900">
+        {/* Profile - 15% of right sidebar */}
+        <div className="h-[15%] border-b border-gray-800 overflow-hidden">
+          <Profile />
+        </div>
+
+        {/* Conversation History - 85% of right sidebar */}
+        <div className="h-[85%] py-4">
           <ConversationHistory />
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Profile */}
-          <div className="lg:col-span-1">
-            <Profile />
-          </div>
-
-          {/* Center: Notes */}
-          <div className="lg:col-span-1 h-[calc(100vh-200px)]">
-            <NotesList />
-          </div>
-
-          {/* Right: Latest Response */}
-          <div className="lg:col-span-1">
-            <ResponseDisplay response={latestResponse} />
-          </div>
-        </div>
-      </main>
-
-      <ChatInput onResponse={setLatestResponse} />
-    </>
+      </div>
+    </div>
   );
 }

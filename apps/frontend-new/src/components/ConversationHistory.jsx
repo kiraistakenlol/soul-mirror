@@ -6,7 +6,6 @@ import api from '../services/api';
 export default function ConversationHistory() {
   const [history, setHistory] = useState([]);
   const [count, setCount] = useState(0);
-  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     loadHistory();
@@ -31,51 +30,48 @@ export default function ConversationHistory() {
   }, []);
 
   return (
-    <div className="bg-gray-900 rounded-lg p-4">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between text-left hover:bg-gray-800 rounded p-2 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-lg">💬</span>
-          <h3 className="text-sm font-semibold text-white">
-            Conversation History <span className="text-gray-500">({count} messages)</span>
-          </h3>
+    <div className="h-full flex flex-col">
+      <div className="px-4 pb-3 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="text-xl">💬</span>
+          <span className="text-sm text-gray-300 font-medium">Conversation ({count})</span>
         </div>
-        <span className="text-gray-400 text-xs">
-          {expanded ? '▼' : '▶'}
-        </span>
-      </button>
+      </div>
 
-      {expanded && (
-        <div className="mt-3 space-y-2 pl-8 max-h-96 overflow-y-auto">
+      <div className="px-4 overflow-y-auto flex-1">
+        <div className="space-y-2">
           {count === 0 ? (
-            <div className="text-gray-500 text-xs italic">No active conversation</div>
+            <div className="text-gray-500 text-sm italic">No active conversation</div>
           ) : (
             history.map((msg, idx) => (
-              <div key={idx} className="bg-gray-800 rounded p-3 text-xs">
-                <div className="flex items-center gap-2 mb-1">
+              <div key={idx} className="bg-gray-800 rounded p-3 text-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">
+                    {msg.type === 'HumanMessage' ? '👤' :
+                     msg.type === 'AIMessage' ? '🤖' :
+                     '⚙️'}
+                  </span>
                   <span className={`font-semibold ${
                     msg.type === 'HumanMessage' ? 'text-blue-400' :
                     msg.type === 'AIMessage' ? 'text-green-400' :
                     'text-yellow-400'
                   }`}>
-                    {msg.type === 'HumanMessage' ? '👤 User' :
-                     msg.type === 'AIMessage' ? '🤖 Assistant' :
-                     '⚙️ ' + msg.type}
+                    {msg.type === 'HumanMessage' ? 'User' :
+                     msg.type === 'AIMessage' ? 'Assistant' :
+                     msg.type}
                   </span>
                 </div>
                 <div className="text-gray-300 whitespace-pre-wrap">
                   {typeof msg.content === 'string'
-                    ? msg.content.substring(0, 200) + (msg.content.length > 200 ? '...' : '')
-                    : JSON.stringify(msg.content).substring(0, 200)
+                    ? msg.content
+                    : JSON.stringify(msg.content, null, 2)
                   }
                 </div>
               </div>
             ))
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

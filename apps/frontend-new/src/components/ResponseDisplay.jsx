@@ -17,40 +17,34 @@ export default function ResponseDisplay({ response }) {
     }
   }
 
-  if (!response) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <span>💬</span>
-          <span>Latest Response</span>
-        </h2>
-        <div className="text-gray-400 text-sm">
-          No responses yet. Start a conversation!
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-gray-900 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <span>💬</span>
-          <span>Latest Response</span>
-        </h2>
-
-        <button
-          onClick={copyToClipboard}
-          className="text-xs bg-gray-800 hover:bg-blue-600 text-gray-300 hover:text-white px-3 py-1.5 rounded transition-colors"
-        >
-          {copied ? 'Copied!' : 'Copy JSON'}
-        </button>
+    <div className="h-full flex flex-col">
+      <div className="px-4 py-3 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="text-xl">💬</span>
+          <span className="text-sm text-gray-300 font-medium">Latest Response</span>
+        </div>
+        {response && (
+          <button
+            onClick={copyToClipboard}
+            className="text-xs bg-gray-800 hover:bg-blue-600 text-gray-300 hover:text-white px-3 py-1.5 rounded transition-colors"
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        )}
       </div>
-
-      <div className="bg-gray-800 border-l-4 border-green-500 rounded p-4 overflow-x-auto">
-        <pre className="text-gray-300 text-xs font-mono whitespace-pre-wrap">
-          {JSON.stringify(response, null, 2)}
-        </pre>
+      <div className="px-4 pb-3 flex-1 overflow-y-auto">
+        {!response ? (
+          <div className="text-gray-400 text-sm">
+            No responses yet. Start a conversation!
+          </div>
+        ) : (
+          <div className="bg-gray-800 border-l-4 border-green-500 rounded p-3">
+            <pre className="text-gray-300 text-xs font-mono whitespace-pre-wrap">
+              {JSON.stringify(response, null, 2)}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
   );
