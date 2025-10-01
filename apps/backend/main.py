@@ -45,7 +45,7 @@ def get_status():
         "status": "healthy",
         "version": "2.0.0",
         "agent": "langgraph",
-        "tools": ["list_notes", "add_note", "remove_note"]
+        "tools": ["list_groups", "add_group", "remove_group", "list_notes", "add_note", "remove_note"]
     }
 
 @app.get("/api/process")
@@ -75,30 +75,45 @@ def process_post(request: ProcessRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/notes")
-def get_notes(user_id: str = "default"):
-    """Get all notes for a user"""
-    user_notes = notes_manager._get_user_notes(user_id)
+def get_notes(user_id: str = "default", group_id: Optional[str] = None):
+    """Get all notes and groups for a user"""
+    user_data = notes_manager._get_user_data(user_id)
+    notes = user_data["notes"]
+    groups = user_data["groups"]
+
+    # Filter notes by group if specified
+    if group_id:
+        notes = {nid: note for nid, note in notes.items() if note.get("group_id") == group_id}
+
     return {
-        "notes": user_notes,
-        "count": len(user_notes),
+        "groups": groups,
+        "notes": notes,
+        "notes_count": len(notes),
+        "groups_count": len(groups),
         "user_id": user_id
     }
 
 @app.get("/api/profile")
 def get_profile(user_id: str = "default"):
-    """Get user profile from profile notes as concatenated string"""
-    user_notes = notes_manager._get_user_notes(user_id)
+    """Get user profile from Profile group notes"""
+    user_data = notes_manager._get_user_data(user_id)
+    notes = user_data["notes"]
+    groups = user_data["groups"]
+
+    # Find Profile group
+    profile_group_id = None
+    for gid, group in groups.items():
+        if group["name"].lower() == "profile":
+            profile_group_id = gid
+            break
+
     profile_items = []
+    if profile_group_id:
+        # Get notes from Profile group
+        for note in notes.values():
+            if note.get("group_id") == profile_group_id:
+                profile_items.append(note["content"])
 
-    # Extract and clean profile notes
-    for note_id, note in user_notes.items():
-        content = note.get("content", "")
-        if content.startswith("[PROFILE]"):
-            # Remove [PROFILE] prefix and strip whitespace
-            cleaned = content.replace("[PROFILE]", "").strip()
-            profile_items.append(cleaned)
-
-    # Concatenate into single string
     profile_string = "; ".join(profile_items) if profile_items else ""
 
     return {
@@ -112,16 +127,23 @@ def get_all_profiles():
     """Get all user profiles"""
     all_profiles = []
 
-    for user_id in notes_manager.user_notes.keys():
-        user_notes = notes_manager._get_user_notes(user_id)
-        profile_items = []
+    for user_id in notes_manager.user_data.keys():
+        user_data = notes_manager._get_user_data(user_id)
+        notes = user_data["notes"]
+        groups = user_data["groups"]
 
-        # Extract and clean profile notes
-        for _, note in user_notes.items():
-            content = note.get("content", "")
-            if content.startswith("[PROFILE]"):
-                cleaned = content.replace("[PROFILE]", "").strip()
-                profile_items.append(cleaned)
+        # Find Profile group
+        profile_group_id = None
+        for gid, group in groups.items():
+            if group["name"].lower() == "profile":
+                profile_group_id = gid
+                break
+
+        profile_items = []
+        if profile_group_id:
+            for note in notes.values():
+                if note.get("group_id") == profile_group_id:
+                    profile_items.append(note["content"])
 
         profile_string = "; ".join(profile_items) if profile_items else ""
 
@@ -129,7 +151,8 @@ def get_all_profiles():
             "user_id": user_id,
             "profile": profile_string,
             "profile_count": len(profile_items),
-            "total_notes": len(user_notes)
+            "total_notes": len(notes),
+            "total_groups": len(groups)
         })
 
     return {
@@ -154,17 +177,32 @@ def get_tools():
     return {
         "tools": [
             {
+                "name": "list_groups",
+                "description": "List all groups with their descriptions"
+            },
+            {
+                "name": "add_group",
+                "description": "Create a new group for organizing notes",
+                "parameters": ["name", "description"]
+            },
+            {
+                "name": "remove_group",
+                "description": "Remove a group and all its notes",
+                "parameters": ["group_id"]
+            },
+            {
                 "name": "list_notes",
-                "description": "List all notes in the system"
+                "description": "List all notes, optionally filtered by group",
+                "parameters": ["group_id (optional)"]
             },
             {
                 "name": "add_note",
-                "description": "Add a new note to the system",
-                "parameters": ["content"]
+                "description": "Add a note to a specific group",
+                "parameters": ["content", "group_id"]
             },
             {
                 "name": "remove_note",
-                "description": "Remove a note from the system by its ID",
+                "description": "Remove a note by its ID",
                 "parameters": ["note_id"]
             }
         ]

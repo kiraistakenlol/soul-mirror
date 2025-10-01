@@ -16,24 +16,56 @@ load_dotenv()
 
 # Define tools that accept config parameter
 @tool
-def list_notes(config: RunnableConfig) -> str:
-    """List all notes in the system"""
+def list_groups(config: RunnableConfig) -> str:
+    """List all groups with their descriptions"""
     user_id = config.get("configurable", {}).get("user_id", "default")
-    return notes_manager.list_notes(user_id)
+    return notes_manager.list_groups(user_id)
 
 @tool
-def add_note(content: str, config: RunnableConfig) -> str:
-    """Add a new note to the system
+def add_group(name: str, description: str, config: RunnableConfig) -> str:
+    """Create a new group for organizing notes
+
+    Args:
+        name: Unique name for the group
+        description: What this group is for
+    """
+    user_id = config.get("configurable", {}).get("user_id", "default")
+    return notes_manager.add_group(user_id, name, description)
+
+@tool
+def remove_group(group_id: str, config: RunnableConfig) -> str:
+    """Remove a group and all its notes
+
+    Args:
+        group_id: The ID of the group to remove
+    """
+    user_id = config.get("configurable", {}).get("user_id", "default")
+    return notes_manager.remove_group(user_id, group_id)
+
+@tool
+def list_notes(group_id: str = None, config: RunnableConfig = None) -> str:
+    """List all notes, optionally filtered by group
+
+    Args:
+        group_id: Optional group ID to filter notes
+    """
+    user_id = config.get("configurable", {}).get("user_id", "default")
+    return notes_manager.list_notes(user_id, group_id)
+
+@tool
+def add_note(content: str, group_id: str, config: RunnableConfig) -> str:
+    """Add a note to a specific group
 
     Args:
         content: The content of the note to add
+        group_id: The ID of the group to add the note to
     """
     user_id = config.get("configurable", {}).get("user_id", "default")
-    return notes_manager.add_note(user_id, content)
+    return notes_manager.add_note(user_id, content, group_id)
 
 @tool
 def remove_note(note_id: str, config: RunnableConfig) -> str:
-    """Remove a note from the system by its ID
+    """Remove a note by its ID
 
     Args:
         note_id: The ID of the note to remove
@@ -42,7 +74,7 @@ def remove_note(note_id: str, config: RunnableConfig) -> str:
     return notes_manager.remove_note(user_id, note_id)
 
 # Collect all tools
-tools = [list_notes, add_note, remove_note]
+tools = [list_groups, add_group, remove_group, list_notes, add_note, remove_note]
 
 class Agent:
     def __init__(self):
@@ -111,65 +143,76 @@ class Agent:
         """Process user input through the agent"""
 
         # System prompt for the personal assistant
-        system_msg = SystemMessage(content="""You are a personal assistant with a notebook where you remember everything about your user.
+        system_msg = SystemMessage(content="""You are a personal assistant with a notebook organized into groups, where you remember everything about your user.
 
 Your primary job is to learn about your user over time and provide personalized help based on what you know.
 
-CORE PRINCIPLE: Always check your notes first before responding.
+CORE PRINCIPLE: Always keep notes organized in groups. Before adding a note, find the right group or create one.
 
-TYPES OF INFORMATION TO TRACK:
+ORGANIZATION WORKFLOW:
 
-Profile Information (use [PROFILE] prefix):
-- Interests and hobbies
-- Preferences and dislikes
-- Personality traits and values
-- Goals and aspirations
-- Personal details (location, relationships, background)
-- Skills they're learning or developing
+1. Check existing groups with list_groups()
+2. Before adding a note:
+   - Find a group that fits the note's topic
+   - If no suitable group exists, create one with add_group()
+   - Then add the note to that group with add_note()
+3. Keep groups focused and well-described
 
-Regular Notes (no prefix):
-- Tasks and reminders
-- Appointments and events
-- Temporary information
-- Project notes
+COMMON GROUPS TO CREATE:
+
+- "Profile" - who the user is (personality, values, preferences)
+- "Interests" - hobbies and things they enjoy
+- "Work" - career, projects, professional life
+- "Goals" - aspirations and things they're working towards
+- "Tasks" - todos and reminders
+- "Events" - appointments and scheduled things
+- "People" - relationships and important people
+- "Skills" - things they're learning
+
+Create new groups when topics emerge that don't fit existing ones.
 
 DECISION TREE FOR EVERY INPUT:
 
-1. List existing notes to understand context
-2. Analyze the input:
-   - Does it reveal something about who they are? → Add [PROFILE] note
-   - Does it contradict existing profile info? → Remove old, add new [PROFILE] note
-   - Is it a task or temporary information? → Add regular note
-   - Is it a casual statement? → Check if you can personalize response using [PROFILE] notes
-3. Use profile notes to personalize your responses
+1. list_groups() to see what's organized
+2. list_notes() to understand context
+3. Analyze the input:
+   - What topic does this relate to?
+   - Is there a group for this? If not, create one
+   - Does it reveal something about who they are? → Find/create appropriate group
+   - Does it contradict existing info? → Remove old note, add new one
+   - Is it temporary information? → Find/create Tasks or Events group
+4. Use notes from relevant groups to personalize responses
 
 EXAMPLES:
 
 Input: "I love surfing"
 Actions:
-- list_notes() to check existing info
-- add_note("[PROFILE] Loves surfing")
-Response: "Got it! I've noted that you love surfing."
+- list_groups() → see "Interests" group exists
+- list_notes() → check for related notes
+- add_note("Loves surfing", group_id="interests_group_id")
+Response: "Got it! Added that you love surfing to your Interests."
+
+Input: "I need to buy groceries tomorrow"
+Actions:
+- list_groups() → check if "Tasks" group exists
+- If not: add_group("Tasks", "Todos and reminders")
+- add_note("Buy groceries tomorrow", group_id="tasks_group_id")
+Response: "Added to your Tasks!"
 
 Input: "I actually don't like coffee anymore"
 Actions:
-- list_notes() to find related notes
-- remove_note([id of "[PROFILE] Likes coffee"])
-- add_note("[PROFILE] No longer likes coffee")
-Response: "Updated! I've removed the old note about liking coffee."
-
-Input: "What should I do today?"
-Actions:
-- list_notes() to check profile and tasks
-- Use profile info to personalize suggestion
-Response: "Based on your notes, you wanted to [task]. Also, since you love [hobby from profile], you might enjoy [suggestion]."
+- list_groups() → see groups
+- list_notes() → find old coffee note
+- remove_note(old_note_id)
+- add_note("No longer likes coffee", group_id="profile_group_id")
+Response: "Updated! Removed the old coffee preference."
 
 CRITICAL RULES:
-- Always list notes first to understand context
-- Update conflicting information immediately
-- Extract profile insights from natural conversation
-- Reference profile when personalizing responses
-- Be proactive about learning preferences""")
+- Always list groups first to see organization
+- Never add notes without a group - find one or create it
+- Keep groups well-organized and clearly described
+- Remove redundant or outdated notes
+- Use groups to quickly find relevant context""")
         
         # Create the input message
         human_msg = HumanMessage(content=user_input)
