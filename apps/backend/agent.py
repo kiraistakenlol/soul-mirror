@@ -2,6 +2,7 @@
 from typing import Literal
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.tools import tool
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from langchain_anthropic import ChatAnthropic
@@ -9,33 +10,36 @@ from langchain_openai import ChatOpenAI
 import os
 from dotenv import load_dotenv
 
-from tools.notes import list_all_notes, add_new_note, remove_note_by_id
+from tools.notes import notes_manager
 
 load_dotenv()
 
-# Define tools using the @tool decorator
+# Define tools that accept config parameter
 @tool
-def list_notes() -> str:
+def list_notes(config: RunnableConfig) -> str:
     """List all notes in the system"""
-    return list_all_notes()
+    user_id = config.get("configurable", {}).get("user_id", "default")
+    return notes_manager.list_notes(user_id)
 
 @tool
-def add_note(content: str) -> str:
+def add_note(content: str, config: RunnableConfig) -> str:
     """Add a new note to the system
-    
+
     Args:
         content: The content of the note to add
     """
-    return add_new_note(content)
+    user_id = config.get("configurable", {}).get("user_id", "default")
+    return notes_manager.add_note(user_id, content)
 
 @tool
-def remove_note(note_id: str) -> str:
+def remove_note(note_id: str, config: RunnableConfig) -> str:
     """Remove a note from the system by its ID
-    
+
     Args:
         note_id: The ID of the note to remove
     """
-    return remove_note_by_id(note_id)
+    user_id = config.get("configurable", {}).get("user_id", "default")
+    return notes_manager.remove_note(user_id, note_id)
 
 # Collect all tools
 tools = [list_notes, add_note, remove_note]
@@ -44,7 +48,7 @@ class Agent:
     def __init__(self):
         # Initialize LLM based on provider
         provider = os.getenv("LLM_PROVIDER", "anthropic")
-        
+
         if provider == "openai":
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key:
@@ -55,43 +59,40 @@ class Agent:
             if not api_key:
                 raise ValueError("ANTHROPIC_API_KEY not found in environment")
             self.llm = ChatAnthropic(model="claude-3-haiku-20240307", temperature=0, api_key=api_key)
-        
+
         # Bind tools to the LLM
         self.llm_with_tools = self.llm.bind_tools(tools)
-        
-        # Create the graph
-        self.graph = self._build_graph()
-        
-        # Compile the graph without memory/checkpointing
-        self.app = self.graph.compile()
-    
+
+        # Build and compile graph once
+        self.app = self._build_graph().compile()
+
     def _build_graph(self) -> StateGraph:
         """Build the LangGraph state machine"""
-        
+
         # Create the graph
         workflow = StateGraph(MessagesState)
-        
+
         # Define the agent node that calls the LLM
         def call_model(state: MessagesState):
             messages = state["messages"]
             response = self.llm_with_tools.invoke(messages)
             return {"messages": [response]}
-        
+
         # Define routing logic
         def should_continue(state: MessagesState) -> Literal["tools", "end"]:
             messages = state["messages"]
             last_message = messages[-1]
-            
+
             # If the LLM makes a tool call, route to tools node
             if hasattr(last_message, "tool_calls") and last_message.tool_calls:
                 return "tools"
             # Otherwise, end
             return "end"
-        
+
         # Add nodes to the graph
         workflow.add_node("agent", call_model)
         workflow.add_node("tools", ToolNode(tools))
-        
+
         # Add edges
         workflow.add_edge(START, "agent")
         workflow.add_conditional_edges(
@@ -103,15 +104,11 @@ class Agent:
             }
         )
         workflow.add_edge("tools", "agent")
-        
+
         return workflow
     
     def process_input(self, user_input: str, user_id: str = "default") -> str:
         """Process user input through the agent"""
-
-        # Set current user for tools
-        from tools.notes import set_current_user
-        set_current_user(user_id)
 
         # System prompt for the personal assistant
         system_msg = SystemMessage(content="""You are a personal assistant with a notebook where you remember everything about your user.
@@ -176,10 +173,11 @@ CRITICAL RULES:
         
         # Create the input message
         human_msg = HumanMessage(content=user_input)
-        
-        # Process without any config (no memory/threading needed)
+
+        # Process with user_id in config
         result = self.app.invoke(
-            {"messages": [system_msg, human_msg]}
+            {"messages": [system_msg, human_msg]},
+            config={"configurable": {"user_id": user_id}}
         )
         
         # Extract the final response

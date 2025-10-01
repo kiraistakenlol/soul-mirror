@@ -1,8 +1,6 @@
 # Notes management tool with three methods: list, add, remove
 # Supports multiple users with isolated note storage per user_id
-import json
-import os
-from typing import List, Dict, Any
+from typing import Dict
 from datetime import datetime
 import uuid
 
@@ -58,24 +56,3 @@ class NotesManager:
 
 # Global notes manager instance
 notes_manager = NotesManager()
-
-# Current user_id - set by agent before processing
-_current_user_id = "default"
-
-def set_current_user(user_id: str):
-    """Set the current user for tool operations"""
-    global _current_user_id
-    _current_user_id = user_id
-
-# Tool functions for LangGraph
-def list_all_notes() -> str:
-    """List all notes for current user"""
-    return notes_manager.list_notes(_current_user_id)
-
-def add_new_note(content: str) -> str:
-    """Add a new note for current user"""
-    return notes_manager.add_note(_current_user_id, content)
-
-def remove_note_by_id(note_id: str) -> str:
-    """Remove a note by its ID for current user"""
-    return notes_manager.remove_note(_current_user_id, note_id)
