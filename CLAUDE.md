@@ -165,26 +165,27 @@ apps/frontend-new
 ```
 apps/frontend-new/
 ├── src/
-│   ├── components/       # React components
+│   ├── components/
 │   │   ├── Header.jsx
-│   │   ├── Profile.jsx
-│   │   ├── NotesList.jsx
-│   │   ├── ChatInput.jsx
-│   │   ├── ResponseDisplay.jsx
-│   │   ├── ConversationHistory.jsx
-│   │   ├── MainView.jsx
-│   │   ├── Profiles.jsx
-│   │   ├── ProfilesView.jsx
 │   │   ├── Tabs.jsx
-│   │   ├── TestsView.jsx
+│   │   ├── MainView.jsx           # Main page layout
+│   │   ├── ToolsView.jsx          # Tools page
+│   │   ├── TestsView.jsx          # Tests page
+│   │   ├── ProfilesView.jsx       # Profiles page
+│   │   ├── Profile.jsx            # User profile display
+│   │   ├── NotesList.jsx          # Notes with collapsible groups
+│   │   ├── ChatInput.jsx          # Input with process/reset
+│   │   ├── ConversationHistory.jsx # Full conversation display
+│   │   ├── ResponseDisplay.jsx
+│   │   ├── Profiles.jsx
 │   │   ├── Tests.jsx
 │   │   ├── TestScenario.jsx
 │   │   └── Tools.jsx
 │   ├── services/
-│   │   └── api.js        # API service layer
-│   ├── App.jsx           # Main app component
-│   ├── main.jsx          # Entry point
-│   └── index.css         # Global styles (Tailwind)
+│   │   └── api.js
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── index.css
 ├── package.json
 ├── vite.config.js
 └── .env
@@ -216,15 +217,28 @@ Setup:
 cp .env.example .env
 ```
 
+#### Layout
+
+**Main View:**
+- Left (70%): Notes (collapsible groups) + Input at bottom
+- Right (30%): Profile (15%) + Conversation History (85%)
+- Input confined to notes column only
+
+**Pages:**
+- Soul Mirror (main interaction)
+- Tools (available agent tools)
+- Tests (test runner interface)
+- Profiles (all user profiles)
+
 #### Features
 
-- Tab-based navigation (Soul Mirror, Tests, Profiles)
-- Auto-refresh notes (10s interval)
-- Auto-refresh status (30s interval)
-- Conversation history view with reset/summarize
-- Keyboard shortcuts (Enter = submit, Esc = clear)
-- Responsive multi-column layout
-- Dark theme with Tailwind
+- Collapsible note groups (collapsed by default)
+- Full conversation history (no truncation)
+- Auto-refresh: notes (10s), status (30s), conversation (5s)
+- Keyboard shortcuts: Enter = submit, Shift+Enter = new line, Esc = clear
+- Fixed-height layout with independent scrolling
+- Profile/conversation have fixed proportions (15%/85%)
+- Large fonts, emojis, generous spacing
 
 ### Test Runner (Python/LangChain)
 
