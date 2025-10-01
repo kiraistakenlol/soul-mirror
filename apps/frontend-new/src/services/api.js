@@ -80,6 +80,10 @@ class ApiService {
   async runScenario(scenarioName) {
     return this.testRequest(`/api/run-scenario?scenario_name=${encodeURIComponent(scenarioName)}`);
   }
+
+  async resetConversation() {
+    return this.request('/api/reset-conversation');
+  }
 }
 
 export default new ApiService();

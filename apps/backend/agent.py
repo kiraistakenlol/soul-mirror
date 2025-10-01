@@ -98,6 +98,9 @@ class Agent:
         # Build and compile graph once
         self.app = self._build_graph().compile()
 
+        # Store conversation history per user: {user_id: [messages]}
+        self.conversation_history = {}
+
     def _build_graph(self) -> StateGraph:
         """Build the LangGraph state machine"""
 
@@ -160,7 +163,11 @@ ORGANIZATION WORKFLOW:
 
 COMMON GROUPS TO CREATE:
 
-- "Profile" - who the user is (personality, values, preferences)
+System groups (UPPERCASE):
+- "PROFILE" - who the user is (personality, values, preferences)
+- "CONVERSATIONS" - summaries of past interactions (auto-created)
+
+User groups (Capitalized):
 - "Interests" - hobbies and things they enjoy
 - "Work" - career, projects, professional life
 - "Goals" - aspirations and things they're working towards
@@ -187,10 +194,10 @@ EXAMPLES:
 
 Input: "I love surfing"
 Actions:
-- list_groups() → see "Interests" group exists
-- list_notes() → check for related notes
-- add_note("Loves surfing", group_id="interests_group_id")
-Response: "Got it! Added that you love surfing to your Interests."
+- list_groups() → check for PROFILE group
+- If not exists: add_group("PROFILE", "Who the user is")
+- add_note("Loves surfing", group_id="profile_group_id")
+Response: "Got it! Added that you love surfing to your PROFILE."
 
 Input: "I need to buy groceries tomorrow"
 Actions:
@@ -199,35 +206,105 @@ Actions:
 - add_note("Buy groceries tomorrow", group_id="tasks_group_id")
 Response: "Added to your Tasks!"
 
-Input: "I actually don't like coffee anymore"
+Input: "delete Tasks group"
 Actions:
-- list_groups() → see groups
-- list_notes() → find old coffee note
-- remove_note(old_note_id)
-- add_note("No longer likes coffee", group_id="profile_group_id")
-Response: "Updated! Removed the old coffee preference."
+- list_groups() → find Tasks group
+- remove_group("tasks_group_id")
+Response: "Deleted Tasks group and all its notes."
 
 CRITICAL RULES:
 - Always list groups first to see organization
 - Never add notes without a group - find one or create it
 - Keep groups well-organized and clearly described
 - Remove redundant or outdated notes
-- Use groups to quickly find relevant context""")
-        
+- Use groups to quickly find relevant context
+- Execute clear commands directly without asking for confirmation""")
+
+        # Get or initialize conversation history for this user
+        if user_id not in self.conversation_history:
+            self.conversation_history[user_id] = []
+
         # Create the input message
         human_msg = HumanMessage(content=user_input)
 
+        # Build messages: system + history + new input
+        messages = [system_msg] + self.conversation_history[user_id] + [human_msg]
+
         # Process with user_id in config
         result = self.app.invoke(
-            {"messages": [system_msg, human_msg]},
+            {"messages": messages},
             config={"configurable": {"user_id": user_id}}
         )
-        
+
+        # Extract all messages from result (includes history + new exchanges)
+        result_messages = result["messages"]
+
+        # Update conversation history with new exchanges (skip system message)
+        # Store only the new human message and all subsequent messages
+        self.conversation_history[user_id].append(human_msg)
+        for msg in result_messages[len(messages):]:
+            self.conversation_history[user_id].append(msg)
+
         # Extract the final response
-        final_message = result["messages"][-1]
-        
+        final_message = result_messages[-1]
+
         # Return the content of the final message
         if hasattr(final_message, "content"):
             return final_message.content
         return str(final_message)
-    
+
+    def summarize_and_reset(self, user_id: str = "default") -> str:
+        """Summarize current conversation and store in Conversations group, then reset"""
+        # Get conversation history
+        history = self.conversation_history.get(user_id, [])
+
+        if len(history) == 0:
+            return "No conversation to summarize."
+
+        # Build conversation text for summarization
+        conversation_text = []
+        for msg in history:
+            if isinstance(msg, HumanMessage):
+                conversation_text.append(f"User: {msg.content}")
+            elif hasattr(msg, "content") and msg.content:
+                conversation_text.append(f"Assistant: {msg.content}")
+
+        if len(conversation_text) == 0:
+            self.conversation_history[user_id] = []
+            return "Conversation cleared."
+
+        conversation_str = "\n".join(conversation_text)
+
+        # Use LLM to summarize
+        summary_prompt = f"""Summarize this conversation into 1-2 concise sentences capturing the essence of what was discussed and any decisions/actions taken:
+
+{conversation_str}
+
+Summary:"""
+
+        summary_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
+        summary = summary_response.content.strip()
+
+        # Find or create CONVERSATIONS group (system group)
+        from tools.notes import notes_manager
+        groups = notes_manager._get_user_data(user_id)
+
+        conversations_group_id = None
+        for gid, group in groups.items():
+            if group["name"] == "CONVERSATIONS":
+                conversations_group_id = gid
+                break
+
+        # Create CONVERSATIONS group if it doesn't exist
+        if not conversations_group_id:
+            result = notes_manager.add_group(user_id, "CONVERSATIONS", "Summaries of past interactions")
+            # Extract group ID from result like "Created group [abc123] CONVERSATIONS"
+            conversations_group_id = result.split("[")[1].split("]")[0]
+
+        # Store summary as note
+        notes_manager.add_note(user_id, summary, conversations_group_id)
+
+        # Clear conversation history
+        self.conversation_history[user_id] = []
+
+        return f"Conversation summarized and archived: {summary}"

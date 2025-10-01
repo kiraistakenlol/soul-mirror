@@ -76,43 +76,38 @@ def process_post(request: ProcessRequest):
 
 @app.get("/api/notes")
 def get_notes(user_id: str = "default", group_id: Optional[str] = None):
-    """Get all notes and groups for a user"""
-    user_data = notes_manager._get_user_data(user_id)
-    notes = user_data["notes"]
-    groups = user_data["groups"]
+    """Get all groups with nested notes for a user"""
+    groups = notes_manager._get_user_data(user_id)
 
-    # Filter notes by group if specified
+    # Filter to specific group if requested
     if group_id:
-        notes = {nid: note for nid, note in notes.items() if note.get("group_id") == group_id}
+        if group_id in groups:
+            groups = {group_id: groups[group_id]}
+        else:
+            groups = {}
+
+    # Count total notes
+    total_notes = sum(len(g.get("notes", {})) for g in groups.values())
 
     return {
         "groups": groups,
-        "notes": notes,
-        "notes_count": len(notes),
+        "notes_count": total_notes,
         "groups_count": len(groups),
         "user_id": user_id
     }
 
 @app.get("/api/profile")
 def get_profile(user_id: str = "default"):
-    """Get user profile from Profile group notes"""
-    user_data = notes_manager._get_user_data(user_id)
-    notes = user_data["notes"]
-    groups = user_data["groups"]
+    """Get user profile from PROFILE group notes"""
+    groups = notes_manager._get_user_data(user_id)
 
-    # Find Profile group
-    profile_group_id = None
-    for gid, group in groups.items():
-        if group["name"].lower() == "profile":
-            profile_group_id = gid
-            break
-
+    # Find PROFILE group (system group in uppercase)
     profile_items = []
-    if profile_group_id:
-        # Get notes from Profile group
-        for note in notes.values():
-            if note.get("group_id") == profile_group_id:
-                profile_items.append(note["content"])
+    for group in groups.values():
+        if group["name"] == "PROFILE":
+            notes = group.get("notes", {})
+            profile_items = [note["content"] for note in notes.values()]
+            break
 
     profile_string = "; ".join(profile_items) if profile_items else ""
 
@@ -128,30 +123,26 @@ def get_all_profiles():
     all_profiles = []
 
     for user_id in notes_manager.user_data.keys():
-        user_data = notes_manager._get_user_data(user_id)
-        notes = user_data["notes"]
-        groups = user_data["groups"]
+        groups = notes_manager._get_user_data(user_id)
 
-        # Find Profile group
-        profile_group_id = None
-        for gid, group in groups.items():
-            if group["name"].lower() == "profile":
-                profile_group_id = gid
+        # Find PROFILE group (system group in uppercase)
+        profile_items = []
+        for group in groups.values():
+            if group["name"] == "PROFILE":
+                notes = group.get("notes", {})
+                profile_items = [note["content"] for note in notes.values()]
                 break
 
-        profile_items = []
-        if profile_group_id:
-            for note in notes.values():
-                if note.get("group_id") == profile_group_id:
-                    profile_items.append(note["content"])
-
         profile_string = "; ".join(profile_items) if profile_items else ""
+
+        # Count total notes
+        total_notes = sum(len(g.get("notes", {})) for g in groups.values())
 
         all_profiles.append({
             "user_id": user_id,
             "profile": profile_string,
             "profile_count": len(profile_items),
-            "total_notes": len(notes),
+            "total_notes": total_notes,
             "total_groups": len(groups)
         })
 
@@ -169,6 +160,19 @@ def reset_user(user_id: str = "default"):
         "user_id": user_id,
         "message": f"All notes cleared for user {user_id}"
     }
+
+@app.get("/api/reset-conversation")
+def reset_conversation(user_id: str = "default"):
+    """Summarize and reset conversation for a user"""
+    try:
+        summary = agent.summarize_and_reset(user_id)
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "summary": summary
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/tools")

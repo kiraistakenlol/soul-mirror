@@ -6,36 +6,32 @@ import uuid
 
 class NotesManager:
     def __init__(self):
-        # Store data per user: {user_id: {"groups": {...}, "notes": {...}}}
+        # Store groups per user with nested notes: {user_id: {group_id: {name, description, notes: {...}}}}
         self.user_data: Dict[str, Dict] = {}
 
     def _get_user_data(self, user_id: str) -> Dict:
-        """Get data structure for specific user"""
+        """Get groups structure for specific user"""
         if user_id not in self.user_data:
-            self.user_data[user_id] = {
-                "groups": {},
-                "notes": {}
-            }
+            self.user_data[user_id] = {}
         return self.user_data[user_id]
 
     def list_groups(self, user_id: str) -> str:
         """List all groups with descriptions"""
-        data = self._get_user_data(user_id)
-        groups = data["groups"]
+        groups = self._get_user_data(user_id)
 
         if not groups:
             return "No groups found."
 
         result = []
         for group_id, group in groups.items():
-            result.append(f"- [{group_id}] {group['name']}: {group['description']}")
+            note_count = len(group.get("notes", {}))
+            result.append(f"- [{group_id}] {group['name']}: {group['description']} ({note_count} notes)")
 
         return "\n".join(result)
 
     def add_group(self, user_id: str, name: str, description: str) -> str:
         """Create a new group"""
-        data = self._get_user_data(user_id)
-        groups = data["groups"]
+        groups = self._get_user_data(user_id)
 
         # Check for duplicate names
         for group in groups.values():
@@ -47,94 +43,102 @@ class NotesManager:
             "id": group_id,
             "name": name,
             "description": description,
+            "notes": {},
             "created": datetime.now().isoformat()
         }
         return f"Created group [{group_id}] {name}"
 
     def remove_group(self, user_id: str, group_id: str) -> str:
         """Remove a group and all its notes"""
-        data = self._get_user_data(user_id)
-        groups = data["groups"]
-        notes = data["notes"]
+        groups = self._get_user_data(user_id)
 
         if group_id not in groups:
             return f"Group {group_id} not found."
 
-        # Remove all notes in this group
-        notes_to_remove = [nid for nid, note in notes.items() if note.get("group_id") == group_id]
-        for note_id in notes_to_remove:
-            del notes[note_id]
+        group = groups[group_id]
+        note_count = len(group.get("notes", {}))
+        group_name = group["name"]
 
-        group_name = groups[group_id]["name"]
         del groups[group_id]
-        return f"Removed group [{group_id}] {group_name} and {len(notes_to_remove)} notes"
+        return f"Removed group [{group_id}] {group_name} and {note_count} notes"
 
     def list_notes(self, user_id: str, group_id: Optional[str] = None) -> str:
         """List all notes, optionally filtered by group"""
-        data = self._get_user_data(user_id)
-        notes = data["notes"]
-        groups = data["groups"]
+        groups = self._get_user_data(user_id)
 
-        if not notes:
+        if not groups:
             return "No notes found."
 
         result = []
-        for note_id, note in notes.items():
-            # Filter by group if specified
-            if group_id and note.get("group_id") != group_id:
-                continue
 
-            # Get group name for display
-            note_group_id = note.get("group_id")
-            group_name = groups.get(note_group_id, {}).get("name", "unknown") if note_group_id else "ungrouped"
+        # If specific group requested
+        if group_id:
+            if group_id not in groups:
+                return f"Group {group_id} not found."
 
-            result.append(f"- [{note_id}] {note['content']} (group: {group_name})")
+            group = groups[group_id]
+            notes = group.get("notes", {})
+
+            if not notes:
+                return f"No notes in group {group['name']}."
+
+            for note_id, note in notes.items():
+                result.append(f"- [{note_id}] {note['content']}")
+
+            return f"Notes in {group['name']}:\n" + "\n".join(result)
+
+        # List all notes across all groups
+        for group_id, group in groups.items():
+            notes = group.get("notes", {})
+            if notes:
+                result.append(f"\n{group['name']}:")
+                for note_id, note in notes.items():
+                    result.append(f"  - [{note_id}] {note['content']}")
 
         if not result:
-            return f"No notes found in group {group_id}." if group_id else "No notes found."
+            return "No notes found."
 
         return "\n".join(result)
 
     def add_note(self, user_id: str, content: str, group_id: str) -> str:
         """Add a note to a specific group"""
-        data = self._get_user_data(user_id)
-        groups = data["groups"]
-        notes = data["notes"]
+        groups = self._get_user_data(user_id)
 
         # Validate group exists
         if group_id not in groups:
             return f"Group {group_id} not found. Create it first with add_group."
 
+        group = groups[group_id]
+        notes = group.get("notes", {})
+
         note_id = str(uuid.uuid4())[:8]
         notes[note_id] = {
             "id": note_id,
             "content": content,
-            "group_id": group_id,
             "created": datetime.now().isoformat()
         }
 
-        group_name = groups[group_id]["name"]
-        return f"Added note [{note_id}] to group '{group_name}': {content}"
+        group["notes"] = notes
+        return f"Added note [{note_id}] to group '{group['name']}': {content}"
 
     def remove_note(self, user_id: str, note_id: str) -> str:
         """Remove a note by ID"""
-        data = self._get_user_data(user_id)
-        notes = data["notes"]
+        groups = self._get_user_data(user_id)
 
-        if note_id not in notes:
-            return f"Note {note_id} not found."
+        # Search for note across all groups
+        for group_id, group in groups.items():
+            notes = group.get("notes", {})
+            if note_id in notes:
+                content = notes[note_id]["content"]
+                del notes[note_id]
+                return f"Removed note [{note_id}]: {content}"
 
-        content = notes[note_id]["content"]
-        del notes[note_id]
-        return f"Removed note [{note_id}]: {content}"
+        return f"Note {note_id} not found."
 
     def reset_user(self, user_id: str) -> None:
         """Clear all data for a user"""
         if user_id in self.user_data:
-            self.user_data[user_id] = {
-                "groups": {},
-                "notes": {}
-            }
+            self.user_data[user_id] = {}
 
 
 # Global notes manager instance

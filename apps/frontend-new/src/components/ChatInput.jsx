@@ -6,6 +6,7 @@ import api from '../services/api';
 export default function ChatInput({ onResponse }) {
   const [input, setInput] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const textareaRef = useRef(null);
 
   async function handleSubmit() {
@@ -24,6 +25,27 @@ export default function ChatInput({ onResponse }) {
       onResponse({ error: error.message });
     } finally {
       setProcessing(false);
+    }
+  }
+
+  async function handleReset() {
+    if (resetting) return;
+
+    setResetting(true);
+    try {
+      const data = await api.resetConversation();
+      onResponse({
+        response: data.summary,
+        input: "Reset conversation"
+      });
+
+      // Refresh profile and notes to show the new Conversations note
+      window.refreshProfile?.();
+      window.refreshNotes?.();
+    } catch (error) {
+      onResponse({ error: error.message });
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -74,6 +96,24 @@ export default function ChatInput({ onResponse }) {
               <>
                 <span>Process</span>
                 <span>↵</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handleReset}
+            disabled={resetting}
+            className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 text-sm"
+            title="Summarize and reset conversation"
+          >
+            {resetting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              </>
+            ) : (
+              <>
+                <span>🔄</span>
+                <span>Reset</span>
               </>
             )}
           </button>

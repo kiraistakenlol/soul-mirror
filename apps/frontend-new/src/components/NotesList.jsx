@@ -5,7 +5,6 @@ import api from '../services/api';
 
 export default function NotesList() {
   const [groups, setGroups] = useState({});
-  const [notes, setNotes] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,10 +18,8 @@ export default function NotesList() {
       setLoading(true);
       const data = await api.getNotes();
       setGroups(data.groups || {});
-      setNotes(data.notes || {});
     } catch {
       setGroups({});
-      setNotes({});
     } finally {
       setLoading(false);
     }
@@ -33,21 +30,10 @@ export default function NotesList() {
     return () => delete window.refreshNotes;
   }, []);
 
-  // Organize notes by group
-  const notesByGroup = {};
-  Object.values(notes).forEach(note => {
-    const groupId = note.group_id || 'ungrouped';
-    if (!notesByGroup[groupId]) notesByGroup[groupId] = [];
-    notesByGroup[groupId].push(note);
-  });
-
-  // Sort notes within each group by created date
-  Object.keys(notesByGroup).forEach(groupId => {
-    notesByGroup[groupId].sort((a, b) => new Date(b.created) - new Date(a.created));
-  });
-
-  const totalNotes = Object.keys(notes).length;
   const totalGroups = Object.keys(groups).length;
+  const totalNotes = Object.values(groups).reduce((sum, group) =>
+    sum + Object.keys(group.notes || {}).length, 0
+  );
 
   return (
     <div className="bg-gray-900 rounded-lg p-6 h-full flex flex-col">
@@ -74,20 +60,24 @@ export default function NotesList() {
           Object.entries(groups)
             .sort((a, b) => a[1].name.localeCompare(b[1].name))
             .map(([groupId, group]) => {
-              const groupNotes = notesByGroup[groupId] || [];
+              const notes = group.notes || {};
+              const notesArray = Object.values(notes).sort((a, b) =>
+                new Date(b.created) - new Date(a.created)
+              );
+
               return (
                 <div key={groupId} className="bg-gray-800 rounded-lg p-4">
                   <div className="mb-3 pb-2 border-b border-gray-700">
                     <h3 className="text-white font-semibold text-sm">{group.name}</h3>
                     <p className="text-gray-400 text-xs mt-1">{group.description}</p>
-                    <span className="text-gray-500 text-xs">{groupNotes.length} notes</span>
+                    <span className="text-gray-500 text-xs">{notesArray.length} notes</span>
                   </div>
 
                   <div className="space-y-2">
-                    {groupNotes.length === 0 ? (
+                    {notesArray.length === 0 ? (
                       <div className="text-gray-500 text-xs italic">No notes in this group</div>
                     ) : (
-                      groupNotes.map(note => (
+                      notesArray.map(note => (
                         <div key={note.id} className="bg-gray-750 rounded p-3 hover:bg-gray-700 transition-colors">
                           <div className="text-gray-200 text-xs mb-1 whitespace-pre-wrap">
                             {note.content}
