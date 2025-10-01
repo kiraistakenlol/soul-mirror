@@ -47,14 +47,16 @@ apps/backend
 
 **LangGraph Agent:**
 - Personal assistant using LangGraph state machine pattern
-- Uses notes as primary memory system
+- Uses notes as primary memory system organized in groups
 - Automatically considers context from notes before responding
 - Updates understanding through natural interaction patterns
+- Maintains conversation history per user with summarization
 
 **Notes Tool:**
-- Single unified notes system for all information
-- Agent organizes information naturally like a human assistant
-- Stores personality insights, preferences, and context together
+- Group-based notes system for organized information
+- Agent creates and manages groups to organize notes by topic
+- System groups (UPPERCASE): PROFILE, CONVERSATIONS
+- User groups (Capitalized): Interests, Work, Goals, Tasks, Events, People, Skills
 - Supports multi-user isolation via user_id
 
 ##### System Flow
@@ -109,10 +111,12 @@ All endpoints prefixed with `/api` and return JSON:
 - `GET /api/status` - System status and health
 - `GET /api/process?input=text&user_id=id` - Process input with personal assistant response
 - `POST /api/process` - Process input (JSON body with input and user_id)
-- `GET /api/notes?user_id=id` - Get all notes for user
-- `GET /api/profile?user_id=id` - Get user profile from profile notes as concatenated string
+- `GET /api/notes?user_id=id&group_id=id` - Get all groups with nested notes for user
+- `GET /api/profile?user_id=id` - Get user profile from PROFILE group notes
 - `GET /api/profiles` - Get all user profiles
 - `GET /api/reset?user_id=id` - Reset all notes for user
+- `GET /api/reset-conversation?user_id=id` - Summarize and archive conversation, then reset
+- `GET /api/conversation-history?user_id=id` - Get current conversation history (debug)
 - `GET /api/tools` - List available tools
 
 #### Development Commands
@@ -167,14 +171,19 @@ apps/frontend-new/
 │   │   ├── NotesList.jsx
 │   │   ├── ChatInput.jsx
 │   │   ├── ResponseDisplay.jsx
+│   │   ├── ConversationHistory.jsx
 │   │   ├── MainView.jsx
 │   │   ├── Profiles.jsx
 │   │   ├── ProfilesView.jsx
 │   │   ├── Tabs.jsx
-│   │   └── TestsView.jsx
+│   │   ├── TestsView.jsx
+│   │   ├── Tests.jsx
+│   │   ├── TestScenario.jsx
+│   │   └── Tools.jsx
 │   ├── services/
 │   │   └── api.js        # API service layer
 │   ├── App.jsx           # Main app component
+│   ├── main.jsx          # Entry point
 │   └── index.css         # Global styles (Tailwind)
 ├── package.json
 ├── vite.config.js
@@ -209,10 +218,12 @@ cp .env.example .env
 
 #### Features
 
+- Tab-based navigation (Soul Mirror, Tests, Profiles)
 - Auto-refresh notes (10s interval)
 - Auto-refresh status (30s interval)
+- Conversation history view with reset/summarize
 - Keyboard shortcuts (Enter = submit, Esc = clear)
-- Responsive 3-column layout
+- Responsive multi-column layout
 - Dark theme with Tailwind
 
 ### Test Runner (Python/LangChain)
@@ -246,12 +257,33 @@ Automated scenario-based testing with LLM evaluation to validate prompt effectiv
 └─────────────────────┘
 ```
 
+#### Directory Structure
+
+```
+apps/test-runner/
+├── main.py              # FastAPI entry point
+├── runner.py            # Orchestrates scenario execution
+├── evaluator.py         # LLM-based evaluation
+├── test-scenarios.json  # Test cases with expected outcomes
+├── requirements.txt     # Python dependencies
+└── scripts/
+```
+
 #### Components
 
 - `test-scenarios.json` - Test cases with input sequences and expected outcomes
 - `runner.py` - Orchestrates scenario execution against backend
 - `evaluator.py` - Uses LLM to compare actual vs expected profile
-- `main.py` - FastAPI service exposing `/api/run-tests`
+- `main.py` - FastAPI service (port 8081)
+
+#### API Endpoints
+
+All endpoints prefixed with `/api` and return JSON:
+
+- `GET /api/status` - Health check
+- `GET /api/scenarios` - Get all test scenarios
+- `GET /api/run-all` - Execute all test scenarios
+- `GET /api/run-scenario?scenario_name=name` - Execute specific scenario
 
 #### Development Commands
 
@@ -263,10 +295,10 @@ pip install -r requirements.txt
 python main.py
 
 # Execute tests via HTTP
-curl http://localhost:8081/api/run-tests
+curl http://localhost:8081/api/run-all
 
 # Or run specific scenario
-curl http://localhost:8081/api/run-tests?scenario=preference_learning
+curl http://localhost:8081/api/run-scenario?scenario_name=preference_learning
 ```
 
 #### Tech Stack
