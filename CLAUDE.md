@@ -240,6 +240,90 @@ cp .env.example .env
 - Profile/conversation have fixed proportions (15%/85%)
 - Large fonts, emojis, generous spacing
 
+### Telegram Bot (Python)
+
+apps/telegram-bot
+
+#### Purpose
+
+Telegram bot that forwards text and voice messages to Soul Mirror backend, enabling note-taking through Telegram channels.
+
+#### Architecture
+
+```
+Telegram Channel
+    │
+    ▼
+Telegram Bot
+    │
+    ├─→ Voice messages → OpenAI Whisper (transcribe)
+    │                          │
+    │                          ▼
+    └─→ Text messages ────→ Backend /api/process
+                              │
+                              ▼
+                       Soul Mirror Agent
+```
+
+#### Directory Structure
+
+```
+apps/telegram-bot/
+├── main.py              # Bot logic with text/voice handlers
+├── requirements.txt     # Python dependencies
+├── Dockerfile           # Container image
+├── scripts/
+│   ├── dev.sh           # Development server
+│   └── install.sh       # Install dependencies
+└── .env                 # Environment configuration
+```
+
+#### Tech Stack
+
+- python (3.9+)
+- python-telegram-bot (bot framework)
+- httpx (HTTP client)
+- openai (Whisper API for voice transcription)
+
+#### Configuration
+
+Environment variables:
+- `TELEGRAM_BOT_TOKEN` - Bot token from @BotFather
+- `OPENAI_API_KEY` - OpenAI API key for Whisper transcription
+- `BACKEND_URL` - Soul Mirror backend URL (default: http://localhost:8080)
+
+Setup:
+```bash
+cp .env.example .env
+# Add TELEGRAM_BOT_TOKEN and OPENAI_API_KEY
+```
+
+#### Development Commands
+
+```bash
+# Install dependencies
+./scripts/install.sh
+
+# Run bot (backend must be running)
+./scripts/dev.sh
+```
+
+#### Features
+
+- Text message forwarding to Soul Mirror
+- Voice message transcription using OpenAI Whisper
+- Channel post support (bot as channel admin)
+- Direct message support
+- Replies include transcription for voice messages
+
+#### Setup in Telegram
+
+1. Create bot via @BotFather: `/newbot`
+2. Get bot token and add to `.env`
+3. Add bot to channel as administrator
+4. Enable "Manage messages" permission
+5. Bot processes all messages posted to channel
+
 ### Test Runner (Python/LangChain)
 
 apps/test-runner
@@ -281,6 +365,7 @@ apps/test-runner/
 ├── test-scenarios.json  # Test cases with expected outcomes
 ├── requirements.txt     # Python dependencies
 └── scripts/
+    └── dev.sh           # Development server
 ```
 
 #### Components
@@ -306,7 +391,7 @@ All endpoints prefixed with `/api` and return JSON:
 pip install -r requirements.txt
 
 # Run test runner (port 8081)
-python main.py
+./scripts/dev.sh
 
 # Execute tests via HTTP
 curl http://localhost:8081/api/run-all

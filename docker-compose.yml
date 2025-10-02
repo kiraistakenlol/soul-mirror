@@ -14,3 +14,13 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+
+  telegram-bot:
+    build: ./apps/telegram-bot
+    env_file:
+      - ./apps/telegram-bot/.env
+    environment:
+      - BACKEND_URL=http://backend:8080
+    depends_on:
+      - backend
+    restart: unless-stopped

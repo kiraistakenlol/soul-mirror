@@ -43,6 +43,15 @@
                 ]
             },
             {
+                "name": "Telegram Bot",
+                "autoExecuteCommands": true,
+                "icon": "comment",
+                "color": "terminal.ansiCyan",
+                "commands": [
+                    "cd apps/telegram-bot && ./scripts/dev.sh"
+                ]
+            },
+            {
                 "name": "VPS",
                 "autoExecuteCommands": true,
                 "icon": "vm",
