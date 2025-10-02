@@ -57,7 +57,7 @@
                 "icon": "vm",
                 "color": "terminal.ansiMagenta",
                 "commands": [
-                    "ssh root@45.76.89.58"
+                    "ssh root@45.32.117.48"
                 ]
             }
         ]

@@ -6,9 +6,88 @@ VPS deployment configuration for Soul Mirror.
 
 - Provider: Vultr (https://my.vultr.com/)
 - Location: Frankfurt
-- IP: 45.76.89.58
+- IP: 45.32.117.48
 - OS: Ubuntu
-- Access: `ssh root@45.76.89.58`
+- Access: `ssh root@45.32.117.48`
+
+## Bootstrap New VPS
+
+**Automated setup from your Mac:**
+
+**1. Run setup script**
+```bash
+./scripts/setup-vps.sh 45.32.117.48
+```
+
+This will:
+- Generate SSH key on Mac (if needed)
+- Setup passwordless SSH access to VPS
+- Upload and run bootstrap.sh on VPS
+- Install Docker, nginx, Node.js, Claude Code, git, firewall
+- Generate SSH key on VPS for GitHub
+- Display VPS public key
+
+**2. Add VPS SSH key to GitHub**
+
+The script will display the VPS public key. Copy it and:
+- Go to https://github.com/settings/keys
+- Click "New SSH key"
+- Paste the key, name it "Soul Mirror VPS"
+- Click "Add SSH key"
+
+**3. Clone repository on VPS**
+```bash
+ssh root@45.32.117.48
+cd /root
+git clone git@github.com:YOUR_USERNAME/soul-mirror.git
+cd soul-mirror
+```
+
+**4. Continue with deployment**
+
+Follow the [Initial Setup](#initial-setup) section below to configure services.
+
+---
+
+**Manual setup (if automated script fails):**
+
+<details>
+<summary>Click to expand manual steps</summary>
+
+**1. SSH into VPS**
+```bash
+ssh root@45.32.117.48
+```
+
+**2. Download and run bootstrap**
+```bash
+curl -o bootstrap.sh https://raw.githubusercontent.com/YOUR_USERNAME/soul-mirror/master/bootstrap.sh
+chmod +x bootstrap.sh
+./bootstrap.sh
+```
+
+**3. Setup SSH from Mac**
+```bash
+# On Mac
+ssh-keygen -t ed25519 -C "mac@soul-mirror"
+ssh-copy-id root@45.32.117.48
+```
+
+**4. Add VPS key to GitHub**
+```bash
+# On VPS, display public key
+cat ~/.ssh/id_ed25519.pub
+# Add to https://github.com/settings/keys
+```
+
+**5. Clone repository**
+```bash
+# On VPS
+cd /root
+git clone git@github.com:YOUR_USERNAME/soul-mirror.git
+```
+
+</details>
 
 ## Architecture
 
@@ -70,7 +149,7 @@ docker-compose up -d
 ```bash
 docker-compose ps
 docker-compose logs -f
-curl http://45.76.89.58/api/status
+curl http://45.32.117.48/api/status
 ```
 
 ## Deployment Scripts
@@ -132,13 +211,13 @@ docker-compose up -d --build
 **When domain ready (e.g., soulmirror.kira.dev):**
 
 **1. Configure DNS at registrar**
-- Add wildcard A record: `*.kira.dev` → `45.76.89.58`
+- Add wildcard A record: `*.kira.dev` → `45.32.117.48`
 - Wait 5-60 minutes for propagation
 
 **2. Update nginx**
 ```bash
 # Edit /etc/nginx/sites-available/soulmirror
-# Change: server_name 45.76.89.58;
+# Change: server_name 45.32.117.48;
 # To:     server_name soulmirror.kira.dev;
 systemctl reload nginx
 ```

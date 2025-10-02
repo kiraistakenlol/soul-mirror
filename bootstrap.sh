@@ -9,6 +9,10 @@ echo "🚀 Starting Soul Mirror VPS bootstrap..."
 echo "📦 Updating system packages..."
 apt update && apt upgrade -y
 
+# Install essential tools
+echo "📦 Installing essential tools..."
+apt install -y git nano curl ufw
+
 # Install Node.js 20.x
 echo "📦 Installing Node.js..."
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
@@ -40,14 +44,37 @@ apt install -y docker-compose
 echo "📦 Installing nginx..."
 apt install -y nginx
 
-# Install git (if not already installed)
-apt install -y git
+# Setup SSH key for GitHub
+echo "🔑 Setting up SSH key for GitHub..."
+if [ ! -f ~/.ssh/id_ed25519 ]; then
+    ssh-keygen -t ed25519 -C "vps@soul-mirror" -f ~/.ssh/id_ed25519 -N ""
+    echo "✓ SSH key generated"
+else
+    echo "✓ SSH key already exists"
+fi
+
+# Configure git
+echo "📝 Configuring git..."
+git config --global user.email "vps@soul-mirror"
+git config --global user.name "Soul Mirror VPS"
+
+# Setup firewall
+echo "🔒 Configuring firewall..."
+ufw --force enable
+ufw allow ssh
+ufw allow 80/tcp
+ufw allow 443/tcp
+echo "✓ Firewall configured"
 
 echo ""
 echo "✅ Bootstrap complete!"
 echo ""
+echo "🔑 Your SSH public key (add this to GitHub):"
+echo "──────────────────────────────────────────────"
+cat ~/.ssh/id_ed25519.pub
+echo "──────────────────────────────────────────────"
+echo ""
 echo "Next steps:"
-echo "1. Authenticate Claude: cd /root/soul-mirror && claude"
-echo "2. Follow authentication prompts"
-echo "3. Run: cat DEPLOY.md"
-echo "4. Ask Claude to execute the deployment"
+echo "1. Add the SSH key above to GitHub: https://github.com/settings/keys"
+echo "2. Clone repository: git clone git@github.com:YOUR_USERNAME/soul-mirror.git"
+echo "3. Follow infra/README.md for deployment"
