@@ -28,6 +28,11 @@ nginx (reverse proxy)
 
 ## Deployment
 
+**SSH Access**
+```bash
+ssh root@45.76.89.58
+```
+
 **1. Copy nginx config**
 ```bash
 cp infra/nginx.conf /etc/nginx/sites-available/soulmirror
@@ -36,7 +41,14 @@ nginx -t
 systemctl reload nginx
 ```
 
-**2. Create backend environment**
+**2. Open firewall ports**
+```bash
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw status
+```
+
+**3. Create backend environment**
 ```bash
 cd apps/backend
 cat > .env << 'EOF'
@@ -48,12 +60,12 @@ EOF
 cd ../..
 ```
 
-**3. Start services**
+**4. Start services**
 ```bash
 docker-compose up -d
 ```
 
-**4. Verify**
+**5. Verify**
 ```bash
 docker-compose ps
 docker-compose logs -f
@@ -83,6 +95,32 @@ docker-compose up -d --build
 **Stop everything**
 ```bash
 docker-compose down
+```
+
+## Troubleshooting
+
+**Check if nginx is running and listening**
+```bash
+systemctl status nginx
+ss -tlnp | grep ':80'
+```
+
+**Check firewall (common issue)**
+```bash
+ufw status
+# If port 80/443 not allowed:
+ufw allow 80/tcp
+ufw allow 443/tcp
+```
+
+**Test connectivity**
+```bash
+# From server (should work):
+curl http://localhost/api/status
+
+# From outside (check if firewall blocks):
+curl http://45.76.89.58/api/status -v
+ping 45.76.89.58
 ```
 
 ## Files
