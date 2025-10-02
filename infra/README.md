@@ -156,6 +156,6 @@ Result: Access via https://soulmirror.kira.dev with auto-renewing SSL
 - `nginx.conf` - Reverse proxy configuration
 - `../docker-compose.yml` - Container orchestration
 - `../apps/backend/Dockerfile` - Backend image
-- `../apps/frontend-new/Dockerfile` - Frontend image
+- `../apps/frontend/Dockerfile` - Frontend image
 - `../scripts/deploy.sh` - Deploy script (runs on VPS)
 - `../scripts/deploy-remote.sh` - Deploy script (runs locally, triggers VPS)

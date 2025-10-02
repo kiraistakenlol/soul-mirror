@@ -39,7 +39,7 @@
                 "icon": "browser",
                 "color": "terminal.ansiBlue",
                 "commands": [
-                    "cd apps/frontend-new && ./scripts/dev.sh"
+                    "cd apps/frontend && ./scripts/dev.sh"
                 ]
             },
             {

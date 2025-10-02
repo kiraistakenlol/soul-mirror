@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./apps/frontend-new
+    build: ./apps/frontend
     ports:
       - "3000:3000"
     restart: unless-stopped

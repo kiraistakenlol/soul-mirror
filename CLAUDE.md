@@ -152,7 +152,7 @@ cp .env.example .env
 
 ### Frontend (React/Vite)
 
-apps/frontend-new
+apps/frontend
 
 #### Tech Stack
 
@@ -163,7 +163,7 @@ apps/frontend-new
 #### Directory Structure
 
 ```
-apps/frontend-new/
+apps/frontend/
 ├── src/
 │   ├── components/
 │   │   ├── Header.jsx
