@@ -10,7 +10,10 @@ cd /root/soul-mirror
 echo "📥 Pulling latest code..."
 git pull
 
-echo "🐳 Building and restarting containers..."
+echo "🛑 Stopping containers..."
+docker-compose down
+
+echo "🐳 Building and starting containers..."
 docker-compose up -d --build
 
 echo ""
