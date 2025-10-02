@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./apps/backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./apps/backend/.env
+    restart: unless-stopped
+
+  frontend:
+    build: ./apps/frontend-new
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE=http://localhost:8080
+    restart: unless-stopped
