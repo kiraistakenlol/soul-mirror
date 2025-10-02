@@ -321,3 +321,19 @@ curl http://localhost:8081/api/run-scenario?scenario_name=preference_learning
 - fastapi
 - langchain-anthropic (LLM evaluator)
 
+## Infrastructure & Deployment
+
+infra/
+
+VPS deployment using Docker Compose and nginx reverse proxy. See `infra/README.md` for:
+- Architecture overview
+- Initial setup steps
+- Deployment scripts
+- Management commands
+- Troubleshooting
+
+**Quick deploy from local:**
+```bash
+./scripts/deploy-remote.sh
+```
+
