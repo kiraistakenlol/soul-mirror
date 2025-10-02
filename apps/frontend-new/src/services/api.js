@@ -1,7 +1,7 @@
 // API service for Soul Mirror backend
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
-const TEST_API_BASE = import.meta.env.VITE_TEST_API_BASE || 'http://localhost:8081';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+const TEST_API_BASE = import.meta.env.VITE_TEST_API_BASE || '';
 
 class ApiService {
   async request(endpoint, options = {}) {
