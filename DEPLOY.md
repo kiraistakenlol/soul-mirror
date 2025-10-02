@@ -16,13 +16,32 @@
 - `bootstrap.sh` already executed (installs Docker, nginx, Claude Code)
 - Public IP address: 45.76.89.58
 
+## Step 0: Install Text Editor
+
+**What:** Install a console text editor for editing config files.
+
+**Why:** You'll need to edit `.env` files and nginx configs.
+
+**Options:**
+```bash
+# Nano (easiest for beginners)
+apt install nano -y
+
+# Or Vim (more powerful)
+apt install vim -y
+```
+
+**Usage:**
+- Nano: `nano filename` (Ctrl+X to exit, Y to save)
+- Vim: `vim filename` (press `i` to edit, `Esc` then `:wq` to save and quit)
+
 ## Step 1: Configure Environment
 
 **What:** Create environment variables for the backend service.
 
 **Why:** Backend needs API keys to connect to LLM provider (Anthropic/OpenAI) and configuration for production mode.
 
-**How:**
+**How (Option 1 - using cat):**
 ```bash
 cd apps/backend
 cat > .env << 'EOF'
@@ -34,7 +53,20 @@ EOF
 cd ../..
 ```
 
-**Note:** Replace `<YOUR_API_KEY>` with actual API key before running.
+**How (Option 2 - using text editor):**
+```bash
+cd apps/backend
+nano .env
+# Add the following content:
+# LLM_PROVIDER=anthropic
+# ANTHROPIC_API_KEY=<YOUR_API_KEY>
+# PORT=8080
+# ENVIRONMENT=production
+# Save with Ctrl+X, Y, Enter
+cd ../..
+```
+
+**Note:** Replace `<YOUR_API_KEY>` with actual API key from console.anthropic.com
 
 ## Step 2: Configure Nginx
 
