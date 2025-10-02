@@ -41,6 +41,15 @@
                 "commands": [
                     "cd apps/frontend-new && ./scripts/dev.sh"
                 ]
+            },
+            {
+                "name": "VPS",
+                "autoExecuteCommands": true,
+                "icon": "vm",
+                "color": "terminal.ansiMagenta",
+                "commands": [
+                    "ssh root@45.76.89.58"
+                ]
             }
         ]
     }
