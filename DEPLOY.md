@@ -4,37 +4,11 @@
 
 ## Prerequisites
 
-- Fresh Ubuntu VPS with root access
-- Public IP address assigned
-- Git installed (`apt install git -y`)
+- Repository already cloned to `/root/soul-mirror`
+- `bootstrap.sh` already executed (installs Docker, nginx, Claude Code)
+- Public IP address available
 
-## Step 1: Install Dependencies
-
-```bash
-# Update system
-apt update && apt upgrade -y
-
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-rm get-docker.sh
-
-# Install Docker Compose
-apt install docker-compose -y
-
-# Install nginx
-apt install nginx -y
-```
-
-## Step 2: Clone Repository
-
-```bash
-cd /root
-git clone <REPO_URL> soul-mirror
-cd soul-mirror
-```
-
-## Step 3: Configure Environment
+## Step 1: Configure Environment
 
 Create `.env` files for backend:
 
@@ -50,38 +24,7 @@ EOF
 cd ../..
 ```
 
-## Step 4: Create Docker Compose
-
-Create `/root/soul-mirror/docker-compose.yml`:
-
-```yaml
-version: '3.8'
-
-services:
-  backend:
-    build: ./apps/backend
-    ports:
-      - "8080:8080"
-    environment:
-      - LLM_PROVIDER=anthropic
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - PORT=8080
-    restart: unless-stopped
-
-  frontend:
-    build: ./apps/frontend-new
-    ports:
-      - "3000:3000"
-    environment:
-      - VITE_API_BASE=http://localhost:8080
-    restart: unless-stopped
-```
-
-Create Dockerfiles if needed:
-- `apps/backend/Dockerfile`
-- `apps/frontend-new/Dockerfile`
-
-## Step 5: Configure Nginx
+## Step 2: Configure Nginx
 
 Create `/etc/nginx/sites-available/soulmirror`:
 
@@ -117,14 +60,14 @@ nginx -t
 systemctl reload nginx
 ```
 
-## Step 6: Start Services
+## Step 3: Start Services
 
 ```bash
 cd /root/soul-mirror
 docker-compose up -d
 ```
 
-## Step 7: Verify
+## Step 4: Verify
 
 - Check containers: `docker-compose ps`
 - Check logs: `docker-compose logs -f`
