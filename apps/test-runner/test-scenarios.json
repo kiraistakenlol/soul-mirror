@@ -4,7 +4,7 @@
     "inputs": [
       "I love surfing"
     ],
-    "profileExpectations": "Mentions user loves surfing"
+    "notesExpectations": "Has note about loving surfing in appropriate group (Interests or similar)"
   },
   {
     "name": "Contradiction handling",
@@ -12,7 +12,7 @@
       "I love coffee",
       "Actually, I don't like coffee anymore"
     ],
-    "profileExpectations": "Does NOT mention loving coffee. Indicates user no longer likes coffee or doesn't like coffee"
+    "notesExpectations": "Does NOT have note about loving coffee. Has note indicating user no longer likes coffee or doesn't like coffee"
   },
   {
     "name": "Duplicate detection",
@@ -21,7 +21,7 @@
       "I also love hiking",
       "Guitar is my favorite hobby"
     ],
-    "profileExpectations": "Mentions guitar and hiking. Does NOT have duplicate information about guitar - guitar mentioned only once"
+    "notesExpectations": "Has notes about guitar and hiking. Does NOT have duplicate notes about guitar - guitar mentioned only once across all notes"
   },
   {
     "name": "Multi extraction",
@@ -30,16 +30,16 @@
       "I live in Barcelona",
       "What languages do you think I should focus on?"
     ],
-    "profileExpectations": "Mentions learning Spanish and living in Barcelona"
+    "notesExpectations": "Has notes about learning Spanish and living in Barcelona in appropriate groups"
   },
   {
-    "name": "Profile vs task separation",
+    "name": "Group separation",
     "inputs": [
       "I'm a software engineer",
       "Remind me to call mom tomorrow",
       "I value work-life balance"
     ],
-    "profileExpectations": "Mentions being a software engineer and valuing work-life balance. Does NOT contain reminder about calling mom"
+    "notesExpectations": "Has notes about being software engineer and valuing work-life balance. Task/reminder about calling mom should be in Tasks/Events group, not mixed with other info"
   },
   {
     "name": "Update without contradiction",
@@ -47,20 +47,20 @@
       "I love surfing",
       "I especially love surfing in winter"
     ],
-    "profileExpectations": "Mentions loving surfing and winter surfing preference. Information should be combined or enhanced, not duplicated"
+    "notesExpectations": "Has notes about loving surfing and winter surfing preference. Information should be combined or enhanced, not duplicated"
   },
   {
     "name": "Implicit extraction",
     "inputs": [
       "I'm vegan, so I can't eat that"
     ],
-    "profileExpectations": "Mentions user is vegan"
+    "notesExpectations": "Has note mentioning user is vegan"
   },
   {
     "name": "Negation extraction",
     "inputs": [
       "I'm not a morning person"
     ],
-    "profileExpectations": "Mentions user is not a morning person or dislikes mornings"
+    "notesExpectations": "Has note that user is not a morning person or dislikes mornings"
   }
 ]

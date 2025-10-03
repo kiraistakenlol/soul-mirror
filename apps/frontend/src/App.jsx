@@ -6,13 +6,11 @@ import Tabs from './components/Tabs';
 import MainView from './components/MainView';
 import ToolsView from './components/ToolsView';
 import TestsView from './components/TestsView';
-import ProfilesView from './components/ProfilesView';
 
 const TABS = [
   { id: 'main', label: 'Soul Mirror', icon: '🧠' },
   { id: 'tools', label: 'Tools', icon: '🛠️' },
   { id: 'tests', label: 'Tests', icon: '🧪' },
-  { id: 'profiles', label: 'Profiles', icon: '👥' },
 ];
 
 export default function App() {
@@ -27,7 +25,6 @@ export default function App() {
         {activeTab === 'main' && <MainView />}
         {activeTab === 'tools' && <ToolsView />}
         {activeTab === 'tests' && <TestsView />}
-        {activeTab === 'profiles' && <ProfilesView />}
       </div>
     </div>
   );

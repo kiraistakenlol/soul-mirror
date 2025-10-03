@@ -25,14 +25,6 @@ class ApiService {
     return this.request('/api/status');
   }
 
-  async getProfile() {
-    return this.request('/api/profile');
-  }
-
-  async getProfiles() {
-    return this.request('/api/profiles');
-  }
-
   async getNotes() {
     return this.request('/api/notes');
   }

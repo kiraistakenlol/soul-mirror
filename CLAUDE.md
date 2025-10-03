@@ -55,7 +55,7 @@ apps/backend
 **Notes Tool:**
 - Group-based notes system for organized information
 - Agent creates and manages groups to organize notes by topic
-- System groups (UPPERCASE): PROFILE, CONVERSATIONS
+- System groups (UPPERCASE): CONVERSATIONS
 - User groups (Capitalized): Interests, Work, Goals, Tasks, Events, People, Skills
 - Supports multi-user isolation via user_id
 
@@ -112,8 +112,6 @@ All endpoints prefixed with `/api` and return JSON:
 - `GET /api/process?input=text&user_id=id` - Process input with personal assistant response
 - `POST /api/process` - Process input (JSON body with input and user_id)
 - `GET /api/notes?user_id=id&group_id=id` - Get all groups with nested notes for user
-- `GET /api/profile?user_id=id` - Get user profile from PROFILE group notes
-- `GET /api/profiles` - Get all user profiles
 - `GET /api/reset?user_id=id` - Reset all notes for user
 - `GET /api/reset-conversation?user_id=id` - Summarize and archive conversation, then reset
 - `GET /api/conversation-history?user_id=id` - Get current conversation history (debug)
@@ -171,13 +169,10 @@ apps/frontend/
 │   │   ├── MainView.jsx           # Main page layout
 │   │   ├── ToolsView.jsx          # Tools page
 │   │   ├── TestsView.jsx          # Tests page
-│   │   ├── ProfilesView.jsx       # Profiles page
-│   │   ├── Profile.jsx            # User profile display
 │   │   ├── NotesList.jsx          # Notes with collapsible groups
 │   │   ├── ChatInput.jsx          # Input with process/reset
 │   │   ├── ConversationHistory.jsx # Full conversation display
 │   │   ├── ResponseDisplay.jsx
-│   │   ├── Profiles.jsx
 │   │   ├── Tests.jsx
 │   │   ├── TestScenario.jsx
 │   │   └── Tools.jsx
@@ -221,14 +216,13 @@ cp .env.example .env
 
 **Main View:**
 - Left (70%): Notes (collapsible groups) + Input at bottom
-- Right (30%): Profile (15%) + Conversation History (85%)
+- Right (30%): Conversation History
 - Input confined to notes column only
 
 **Pages:**
 - Soul Mirror (main interaction)
 - Tools (available agent tools)
 - Tests (test runner interface)
-- Profiles (all user profiles)
 
 #### Features
 
@@ -237,7 +231,6 @@ cp .env.example .env
 - Auto-refresh: notes (10s), status (30s), conversation (5s)
 - Keyboard shortcuts: Enter = submit, Shift+Enter = new line, Esc = clear
 - Fixed-height layout with independent scrolling
-- Profile/conversation have fixed proportions (15%/85%)
 - Large fonts, emojis, generous spacing
 
 ### Telegram Bot (Python)
@@ -350,7 +343,6 @@ Automated scenario-based testing with LLM evaluation to validate prompt effectiv
 │   (port 8080)       │
 │                     │
 │  /api/process       │
-│  /api/profile       │
 │  /api/reset         │
 └─────────────────────┘
 ```

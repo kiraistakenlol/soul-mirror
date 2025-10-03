@@ -164,7 +164,6 @@ ORGANIZATION WORKFLOW:
 COMMON GROUPS TO CREATE:
 
 System groups (UPPERCASE):
-- "PROFILE" - who the user is (personality, values, preferences)
 - "CONVERSATIONS" - summaries of past interactions (auto-created)
 
 User groups (Capitalized):
@@ -194,10 +193,10 @@ EXAMPLES:
 
 Input: "I love surfing"
 Actions:
-- list_groups() → check for PROFILE group
-- If not exists: add_group("PROFILE", "Who the user is")
-- add_note("Loves surfing", group_id="profile_group_id")
-Response: "Added 'Loves surfing' to PROFILE."
+- list_groups() → check for "Interests" group
+- If not exists: add_group("Interests", "Hobbies and things they enjoy")
+- add_note("Loves surfing", group_id="interests_group_id")
+Response: "Added 'Loves surfing' to Interests."
 
 Input: "I need to buy groceries tomorrow"
 Actions:

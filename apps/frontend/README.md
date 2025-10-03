@@ -48,9 +48,9 @@ VITE_API_BASE=http://localhost:8080
 src/
 ├── components/          # React components
 │   ├── Header.jsx       # Header with status
-│   ├── Profile.jsx      # User profile display
 │   ├── NotesList.jsx    # Notes list with auto-refresh
 │   ├── ChatInput.jsx    # Input interface
+│   ├── ConversationHistory.jsx  # Conversation display
 │   └── ResponseDisplay.jsx  # Latest response
 ├── services/
 │   └── api.js           # API service layer

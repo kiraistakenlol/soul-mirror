@@ -17,8 +17,7 @@ export default function ChatInput() {
       await api.processInput(input);
       setInput('');
 
-      // Refresh profile, notes, and history
-      window.refreshProfile?.();
+      // Refresh notes and history
       window.refreshNotes?.();
       window.refreshHistory?.();
     } catch (error) {
@@ -35,8 +34,7 @@ export default function ChatInput() {
     try {
       await api.resetConversation();
 
-      // Refresh profile, notes, and history
-      window.refreshProfile?.();
+      // Refresh notes and history
       window.refreshNotes?.();
       window.refreshHistory?.();
     } catch (error) {

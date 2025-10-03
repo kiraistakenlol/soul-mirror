@@ -3,19 +3,19 @@
 ## Problem
 
 Validating prompt effectiveness is hard without systematic testing. Need to verify that:
-- Agent correctly extracts profile information from user inputs
+- Agent correctly organizes notes into groups
 - Agent maintains consistent behavior across conversation sequences
-- Profile updates work correctly (additions, contradictions, removals)
-- Agent personalizes responses using profile context
+- Notes updates work correctly (additions, contradictions, removals)
+- Agent properly categorizes information into appropriate groups
 
 Manual testing is slow, inconsistent, and doesn't scale as prompt evolves.
 
 ## Solution
 
 Automated scenario-based testing with LLM evaluation:
-1. Define test scenarios: input sequences + expected profile outcomes
+1. Define test scenarios: input sequences + expected notes outcomes
 2. Run scenarios against main backend via HTTP
-3. Compare actual profile with expected profile using LLM
+3. Compare actual notes with expected notes using LLM
 4. Generate structured test results
 
 ## Architecture
@@ -36,7 +36,7 @@ Automated scenario-based testing with LLM evaluation:
 │   (port 8080)       │
 │                     │
 │  /api/process       │
-│  /api/profile       │
+│  /api/notes         │
 │  /api/reset         │
 └─────────────────────┘
 ```
@@ -48,13 +48,13 @@ Defines test cases with input sequences and expected outcomes
 
 **runner.py**
 Orchestrates scenario execution:
-- Reset backend state
+- Create unique user_id per test (no reset needed)
 - Send input sequence to `/api/process`
-- Fetch resulting profile via `/api/profile`
+- Fetch resulting notes via `/api/notes`
 - Pass to evaluator
 
 **evaluator.py**
-Uses LLM to compare actual vs expected profile:
+Uses LLM to compare actual vs expected notes:
 - Prompt asks LLM to evaluate match
 - Returns pass/fail + reasoning
 - Handles fuzzy matching (synonyms, paraphrasing)
@@ -66,28 +66,26 @@ FastAPI service exposing `/api/run-tests`
 
 ```json
 {
-  "name": "Basic preference learning",
-  "description": "Agent should extract and store user preference",
+  "name": "Base extraction",
   "inputs": [
-    "I love surfing",
-    "What do you know about me?"
+    "I love surfing"
   ],
-  "profileExpectations": "Should contain information that user loves surfing"
+  "notesExpectations": "Has note about loving surfing in appropriate group (Interests or similar)"
 }
 ```
 
 ### Evaluation Strategy
 
 LLM evaluator receives:
-- Actual profile notes (from `/api/profile`)
-- Expected profile criteria
+- Actual notes data (from `/api/notes`)
+- Expected notes criteria
 - Test scenario context
 
 Returns structured evaluation:
 ```json
 {
   "passed": true,
-  "reasoning": "Profile contains [PROFILE] note about loving surfing",
+  "reasoning": "Notes contain entry about loving surfing in Interests group",
   "missing": [],
   "unexpected": []
 }
@@ -112,7 +110,7 @@ curl http://localhost:8081/api/run-tests?scenario=preference_learning
 
 ## Future Extensions
 
-- Multiple scenario categories (profile, tasks, contradictions, personalization)
+- Multiple scenario categories (groups, tasks, contradictions, organization)
 - Performance benchmarks (response time, tool usage)
 - Regression testing in CI/CD
 - Comparative testing across different prompts

@@ -96,60 +96,6 @@ def get_notes(user_id: str = "default", group_id: Optional[str] = None):
         "user_id": user_id
     }
 
-@app.get("/api/profile")
-def get_profile(user_id: str = "default"):
-    """Get user profile from PROFILE group notes"""
-    groups = notes_manager._get_user_data(user_id)
-
-    # Find PROFILE group (system group in uppercase)
-    profile_items = []
-    for group in groups.values():
-        if group["name"] == "PROFILE":
-            notes = group.get("notes", {})
-            profile_items = [note["content"] for note in notes.values()]
-            break
-
-    profile_string = "; ".join(profile_items) if profile_items else ""
-
-    return {
-        "profile": profile_string,
-        "count": len(profile_items),
-        "user_id": user_id
-    }
-
-@app.get("/api/profiles")
-def get_all_profiles():
-    """Get all user profiles"""
-    all_profiles = []
-
-    for user_id in notes_manager.user_data.keys():
-        groups = notes_manager._get_user_data(user_id)
-
-        # Find PROFILE group (system group in uppercase)
-        profile_items = []
-        for group in groups.values():
-            if group["name"] == "PROFILE":
-                notes = group.get("notes", {})
-                profile_items = [note["content"] for note in notes.values()]
-                break
-
-        profile_string = "; ".join(profile_items) if profile_items else ""
-
-        # Count total notes
-        total_notes = sum(len(g.get("notes", {})) for g in groups.values())
-
-        all_profiles.append({
-            "user_id": user_id,
-            "profile": profile_string,
-            "profile_count": len(profile_items),
-            "total_notes": total_notes,
-            "total_groups": len(groups)
-        })
-
-    return {
-        "profiles": all_profiles,
-        "count": len(all_profiles)
-    }
 
 @app.get("/api/reset")
 def reset_user(user_id: str = "default"):

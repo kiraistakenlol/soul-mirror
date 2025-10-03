@@ -3,13 +3,13 @@ import requests
 import json
 from datetime import datetime
 from typing import List, Dict
-from evaluator import ProfileEvaluator
+from evaluator import NotesEvaluator
 
 BACKEND_URL = "http://localhost:8080"
 
 class TestRunner:
     def __init__(self):
-        self.evaluator = ProfileEvaluator()
+        self.evaluator = NotesEvaluator()
 
     def load_scenarios(self) -> List[Dict]:
         """Load test scenarios from JSON file"""
@@ -20,7 +20,7 @@ class TestRunner:
         """Execute a single test scenario with unique user_id (no reset needed)"""
         name = scenario["name"]
         inputs = scenario["inputs"]
-        expectations = scenario["profileExpectations"]
+        expectations = scenario["notesExpectations"]
 
         # Generate unique user_id: test-{scenarioName}-{datetime}
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -59,27 +59,26 @@ class TestRunner:
                     "error": f"Request failed: {str(e)}"
                 }
 
-        # Fetch final profile
-        print(f"\nFetching profile for user_id: {user_id}")
+        # Fetch final notes
+        print(f"\nFetching notes for user_id: {user_id}")
         try:
-            profile_resp = requests.get(
-                f"{BACKEND_URL}/api/profile",
+            notes_resp = requests.get(
+                f"{BACKEND_URL}/api/notes",
                 params={"user_id": user_id}
             )
-            profile_data = profile_resp.json()
-            actual_profile = profile_data.get("profile", "")
-            print(f"Profile received: {actual_profile[:100]}..." if len(actual_profile) > 100 else f"Profile received: {actual_profile}")
+            notes_data = notes_resp.json()
+            print(f"Notes received: {notes_data.get('notes_count', 0)} notes in {notes_data.get('groups_count', 0)} groups")
         except Exception as e:
-            print(f"✗ Failed to fetch profile: {str(e)}")
+            print(f"✗ Failed to fetch notes: {str(e)}")
             return {
                 "scenario": name,
                 "passed": False,
-                "error": f"Failed to fetch profile: {str(e)}"
+                "error": f"Failed to fetch notes: {str(e)}"
             }
 
         # Evaluate with LLM
-        print(f"\nEvaluating profile...")
-        evaluation = self.evaluator.evaluate(actual_profile, expectations, name)
+        print(f"\nEvaluating notes...")
+        evaluation = self.evaluator.evaluate(notes_data, expectations, name)
         print(f"Result: {'✓ PASSED' if evaluation.get('passed') else '✗ FAILED'}")
 
         return {
@@ -88,7 +87,7 @@ class TestRunner:
             "reasoning": evaluation.get("reasoning", ""),
             "missing": evaluation.get("missing", []),
             "unexpected": evaluation.get("unexpected", []),
-            "actual_profile": actual_profile,
+            "actual_notes": notes_data,
             "expectations": expectations
         }
 

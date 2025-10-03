@@ -1,6 +1,5 @@
-// Main application view with profile, notes, and chat
+// Main application view with notes and chat
 
-import Profile from './Profile';
 import NotesList from './NotesList';
 import ChatInput from './ChatInput';
 import ConversationHistory from './ConversationHistory';
@@ -21,17 +20,9 @@ export default function MainView() {
         </div>
       </div>
 
-      {/* Right sidebar (30%) - Profile, Conversation */}
-      <div className="w-[30%] flex flex-col bg-gray-900">
-        {/* Profile - 15% of right sidebar */}
-        <div className="h-[15%] border-b border-gray-800 overflow-hidden">
-          <Profile />
-        </div>
-
-        {/* Conversation History - 85% of right sidebar */}
-        <div className="h-[85%] py-4">
-          <ConversationHistory />
-        </div>
+      {/* Right sidebar (30%) - Conversation History */}
+      <div className="w-[30%] flex flex-col bg-gray-900 py-4">
+        <ConversationHistory />
       </div>
     </div>
   );
