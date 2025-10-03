@@ -110,7 +110,9 @@ class Agent:
         # Define the agent node that calls the LLM
         def call_model(state: MessagesState):
             messages = state["messages"]
+            print("  🤖 Calling LLM...")
             response = self.llm_with_tools.invoke(messages)
+            print(f"  💭 LLM response: {response.content[:60] if hasattr(response, 'content') and response.content else 'tool_calls'}")
             return {"messages": [response]}
 
         # Define routing logic
@@ -120,8 +122,11 @@ class Agent:
 
             # If the LLM makes a tool call, route to tools node
             if hasattr(last_message, "tool_calls") and last_message.tool_calls:
+                tool_names = [tc["name"] for tc in last_message.tool_calls]
+                print(f"  🔀 Routing to tools: {', '.join(tool_names)}")
                 return "tools"
             # Otherwise, end
+            print("  🔀 Routing to end")
             return "end"
 
         # Add nodes to the graph
@@ -144,6 +149,7 @@ class Agent:
     
     def process_input(self, user_input: str, user_id: str = "default") -> str:
         """Process user input through the agent"""
+        print(f"🚀 Starting agent flow for user={user_id}")
 
         # System prompt for the personal assistant
         system_msg = SystemMessage(content="""You are a personal assistant with a notebook organized into groups, where you remember everything about your user.
@@ -243,8 +249,10 @@ CRITICAL RULES:
 
         # Build messages: system + history + new input
         messages = [system_msg] + self.conversation_history[user_id] + [human_msg]
+        print(f"  📚 Context: {len(self.conversation_history[user_id])} history messages")
 
         # Process with user_id in config
+        print("  ⚙️  Invoking graph...")
         result = self.app.invoke(
             {"messages": messages},
             config={"configurable": {"user_id": user_id}}
@@ -252,6 +260,7 @@ CRITICAL RULES:
 
         # Extract all messages from result (includes history + new exchanges)
         result_messages = result["messages"]
+        print(f"  📤 Graph returned {len(result_messages)} total messages")
 
         # Update conversation history with new exchanges (skip system message)
         # Store only the new human message and all subsequent messages
@@ -261,11 +270,11 @@ CRITICAL RULES:
 
         # Extract the final response
         final_message = result_messages[-1]
+        response_text = final_message.content if hasattr(final_message, "content") else str(final_message)
+        print(f"✅ Agent complete: \"{response_text[:60]}{'...' if len(response_text) > 60 else ''}\"\n")
 
         # Return the content of the final message
-        if hasattr(final_message, "content"):
-            return final_message.content
-        return str(final_message)
+        return response_text
 
     def summarize_and_reset(self, user_id: str = "default") -> str:
         """Summarize current conversation and store in Conversations group, then reset"""

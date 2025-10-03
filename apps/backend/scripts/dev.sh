@@ -26,4 +26,4 @@ pip install -r requirements.txt
 # Run the server
 echo "Starting Soul Mirror backend on port 8080..."
 export PYTHONPATH="$BACKEND_DIR"
-uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+uvicorn main:app --host 0.0.0.0 --port 8080 --reload --no-access-log

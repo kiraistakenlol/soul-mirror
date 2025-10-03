@@ -8,9 +8,11 @@ class NotesManager:
 
     def list_groups(self, user_id: str) -> str:
         """List all groups with descriptions"""
+        print(f"    🔧 list_groups(user={user_id})")
         groups = self.repo.get_all_groups_with_notes(user_id)
 
         if not groups:
+            print(f"    ↳ No groups found")
             return "No groups found."
 
         result = []
@@ -18,15 +20,19 @@ class NotesManager:
             note_count = len(group['notes'])
             result.append(f"- [{group['id']}] {group['name']} ({note_count} notes)")
 
+        print(f"    ↳ Found {len(groups)} groups")
         return "\n".join(result)
 
     def add_group(self, user_id: str, name: str, description: str = "") -> str:
         """Create a new group"""
+        print(f"    🔧 add_group(user={user_id}, name=\"{name}\")")
         try:
             group_id = self.repo.get_or_create_group(user_id, name)
+            print(f"    ↳ Created group [{group_id}]")
             return f"Created group [{group_id}] {name}"
         except Exception as e:
             if "duplicate" in str(e).lower():
+                print(f"    ↳ Group already exists")
                 return f"Group with name '{name}' already exists."
             raise
 
@@ -38,37 +44,50 @@ class NotesManager:
 
     def list_notes(self, user_id: str, group_id: Optional[int] = None) -> str:
         """List all notes, optionally filtered by group"""
+        print(f"    🔧 list_notes(user={user_id}, group={group_id or 'all'})")
         if group_id:
             notes = self.repo.get_notes_by_group(user_id, group_id)
             if not notes:
+                print(f"    ↳ No notes in group")
                 return f"No notes in group {group_id}."
+            print(f"    ↳ Found {len(notes)} notes")
             return "\n".join([f"- {note}" for note in notes])
 
         groups = self.repo.get_all_groups_with_notes(user_id)
         if not groups:
+            print(f"    ↳ No notes found")
             return "No notes found."
 
         result = []
+        total_notes = 0
         for group in groups:
             if group['notes']:
                 result.append(f"\n{group['name']}:")
                 for note in group['notes']:
                     result.append(f"  - [{note['id']}] {note['content']}")
+                    total_notes += 1
 
         if not result:
+            print(f"    ↳ No notes found")
             return "No notes found."
 
+        print(f"    ↳ Found {total_notes} notes across {len(groups)} groups")
         return "\n".join(result)
 
     def add_note(self, user_id: str, content: str, group_id: int) -> str:
         """Add a note to a specific group"""
+        print(f"    🔧 add_note(user={user_id}, group={group_id}, content=\"{content[:40]}...\")")
         note_id = self.repo.add_note(user_id, group_id, content)
+        print(f"    ↳ Created note [{note_id}]")
         return f"Added note [{note_id}] to group {group_id}: {content}"
 
     def remove_note(self, user_id: str, note_id: int) -> str:
         """Remove a note by ID"""
+        print(f"    🔧 remove_note(user={user_id}, note={note_id})")
         if self.repo.delete_note(user_id, note_id):
+            print(f"    ↳ Removed note [{note_id}]")
             return f"Removed note [{note_id}]"
+        print(f"    ↳ Note not found")
         return f"Note {note_id} not found."
 
     def reset_user(self, user_id: str) -> None:

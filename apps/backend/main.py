@@ -72,26 +72,32 @@ def get_status():
 def process_get(input: str, user_id: str = "default"):
     """Process input via GET request"""
     try:
+        print(f"📥 [GET] user={user_id} input=\"{input[:80]}{'...' if len(input) > 80 else ''}\"")
         response = agent.process_input(input, user_id)
+        print(f"✓ Response: \"{response[:80]}{'...' if len(response) > 80 else ''}\"")
         return ProcessResponse(
             input=input,
             response=response,
             user_id=user_id
         )
     except Exception as e:
+        print(f"✗ Error processing request: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/process")
 def process_post(request: ProcessRequest):
     """Process input via POST request"""
     try:
+        print(f"📥 [POST] user={request.user_id} input=\"{request.input[:80]}{'...' if len(request.input) > 80 else ''}\"")
         response = agent.process_input(request.input, request.user_id)
+        print(f"✓ Response: \"{response[:80]}{'...' if len(response) > 80 else ''}\"")
         return ProcessResponse(
             input=request.input,
             response=response,
             user_id=request.user_id
         )
     except Exception as e:
+        print(f"✗ Error processing request: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/note-groups")
@@ -269,5 +275,7 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=port,
-        reload=True if os.getenv("ENVIRONMENT", "development") == "development" else False
+        reload=True if os.getenv("ENVIRONMENT", "development") == "development" else False,
+        log_level="warning",
+        access_log=False
     )
