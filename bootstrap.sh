@@ -40,6 +40,18 @@ rm get-docker.sh
 echo "📦 Installing Docker Compose..."
 apt install -y docker-compose
 
+# Configure Docker to use IPv4 only
+echo "🔧 Configuring Docker for IPv4..."
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json << 'EOF'
+{
+  "ipv6": false,
+  "ip6tables": false
+}
+EOF
+systemctl restart docker
+echo "✓ Docker configured for IPv4"
+
 # Install nginx
 echo "📦 Installing nginx..."
 apt install -y nginx

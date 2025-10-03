@@ -133,19 +133,28 @@ nginx -t
 systemctl reload nginx
 ```
 
-**4. Open firewall**
+**4. Enable IPv6 (required for Docker)**
+```bash
+# On Vultr dashboard: Settings → IPv6 → Enable IPv6
+# Then on VPS:
+systemctl restart networking
+# Verify IPv6 is working:
+ping6 -c 3 google.com
+```
+
+**5. Open firewall**
 ```bash
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw status
 ```
 
-**5. Start services**
+**6. Start services**
 ```bash
 docker-compose up -d
 ```
 
-**6. Verify**
+**7. Verify**
 ```bash
 docker-compose ps
 docker-compose logs -f
@@ -205,6 +214,7 @@ docker-compose up -d --build
 - Firewall blocking: `ufw status` (ensure port 80/443 allowed)
 - API not responding: Check backend logs and `.env` has API key
 - Changes not showing: Rebuild with `docker-compose up -d --build`
+- Docker build fails with "network is unreachable": Enable IPv6 in Vultr dashboard
 
 ## Future: Add Domain
 
