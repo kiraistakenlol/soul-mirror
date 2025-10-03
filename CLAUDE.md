@@ -50,12 +50,11 @@ apps/backend
 - Uses notes as primary memory system organized in groups
 - Automatically considers context from notes before responding
 - Updates understanding through natural interaction patterns
-- Maintains conversation history per user with summarization
+- Maintains conversation history per user
 
 **Notes Tool:**
 - Group-based notes system for organized information
 - Agent creates and manages groups to organize notes by topic
-- System groups (UPPERCASE): CONVERSATIONS
 - Default user groups: Self-Improvement, Health & Lifestyle, Project Ideas, Work & Career, Language Learning, Relationships, Philosophy & Values, Location & Travel, Tasks & Reminders, Daily Reflections
 - Supports multi-user isolation via user_id
 - Initialize default groups via `/api/create-default-note-groups` or Dev panel
@@ -115,7 +114,7 @@ All endpoints prefixed with `/api` and return JSON:
 - `POST /api/process` - Process input (JSON body with input and user_id)
 - `GET /api/notes?user_id=id&group_id=id` - Get all groups with nested notes for user
 - `GET /api/reset?user_id=id` - Reset all notes for user
-- `GET /api/reset-conversation?user_id=id` - Summarize and archive conversation, then reset
+- `GET /api/reset-conversation?user_id=id` - Reset conversation history
 - `GET /api/conversation-history?user_id=id` - Get current conversation history (debug)
 - `POST /api/create-default-note-groups?user_id=id` - Initialize default note groups from config
 - `GET /api/tools` - List available tools

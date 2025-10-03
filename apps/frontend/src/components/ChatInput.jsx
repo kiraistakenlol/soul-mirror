@@ -91,7 +91,7 @@ export default function ChatInput() {
             onClick={handleReset}
             disabled={resetting}
             className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 text-base"
-            title="Summarize and reset conversation"
+            title="Reset conversation"
           >
             {resetting ? (
               <>

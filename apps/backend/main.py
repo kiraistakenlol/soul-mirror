@@ -148,13 +148,13 @@ def reset_user(user_id: str = "default"):
 
 @app.get("/api/reset-conversation")
 def reset_conversation(user_id: str = "default"):
-    """Summarize and reset conversation for a user"""
+    """Reset conversation for a user"""
     try:
-        summary = agent.summarize_and_reset(user_id)
+        message = agent.reset_conversation(user_id)
         return {
             "status": "success",
             "user_id": user_id,
-            "summary": summary
+            "message": message
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -169,9 +169,6 @@ ORGANIZATION WORKFLOW:
 
 COMMON GROUPS TO CREATE:
 
-System groups (UPPERCASE):
-- "CONVERSATIONS" - summaries of past interactions (auto-created)
-
 User groups (Capitalized):
 - "Interests" - hobbies and things they enjoy
 - "Work" - career, projects, professional life
@@ -276,58 +273,12 @@ CRITICAL RULES:
         # Return the content of the final message
         return response_text
 
-    def summarize_and_reset(self, user_id: str = "default") -> str:
-        """Summarize current conversation and store in Conversations group, then reset"""
-        # Get conversation history
+    def reset_conversation(self, user_id: str = "default") -> str:
+        """Reset conversation history"""
         history = self.conversation_history.get(user_id, [])
 
         if len(history) == 0:
-            return "No conversation to summarize."
+            return "No conversation to reset."
 
-        # Build conversation text for summarization
-        conversation_text = []
-        for msg in history:
-            if isinstance(msg, HumanMessage):
-                conversation_text.append(f"User: {msg.content}")
-            elif hasattr(msg, "content") and msg.content:
-                conversation_text.append(f"Assistant: {msg.content}")
-
-        if len(conversation_text) == 0:
-            self.conversation_history[user_id] = []
-            return "Conversation cleared."
-
-        conversation_str = "\n".join(conversation_text)
-
-        # Use LLM to summarize
-        summary_prompt = f"""Summarize this conversation into 1-2 concise sentences capturing the essence of what was discussed and any decisions/actions taken:
-
-{conversation_str}
-
-Summary:"""
-
-        summary_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
-        summary = summary_response.content.strip()
-
-        # Find or create CONVERSATIONS group (system group)
-        from tools.notes import notes_manager
-        groups = notes_manager._get_user_data(user_id)
-
-        conversations_group_id = None
-        for gid, group in groups.items():
-            if group["name"] == "CONVERSATIONS":
-                conversations_group_id = gid
-                break
-
-        # Create CONVERSATIONS group if it doesn't exist
-        if not conversations_group_id:
-            result = notes_manager.add_group(user_id, "CONVERSATIONS", "Summaries of past interactions")
-            # Extract group ID from result like "Created group [abc123] CONVERSATIONS"
-            conversations_group_id = result.split("[")[1].split("]")[0]
-
-        # Store summary as note
-        notes_manager.add_note(user_id, summary, conversations_group_id)
-
-        # Clear conversation history
         self.conversation_history[user_id] = []
-
-        return f"Conversation summarized and archived: {summary}"
+        return "Conversation reset."
