@@ -41,26 +41,40 @@ class NotesRepository:
     def get_all_groups_with_notes(self, user_id: str) -> List[Dict]:
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(
-                    "SELECT id, name FROM note_groups WHERE user_id = %s ORDER BY created_at",
-                    (user_id,)
-                )
-                groups = cur.fetchall()
+                cur.execute("""
+                    SELECT
+                        g.id as group_id,
+                        g.name as group_name,
+                        n.id as note_id,
+                        n.content as note_content,
+                        n.created_at as note_created_at
+                    FROM note_groups g
+                    LEFT JOIN notes n ON g.id = n.group_id
+                    WHERE g.user_id = %s
+                    ORDER BY g.created_at, n.created_at
+                """, (user_id,))
 
-                result = []
-                for group in groups:
-                    cur.execute(
-                        "SELECT id, content, created_at FROM notes WHERE group_id = %s ORDER BY created_at",
-                        (group['id'],)
-                    )
-                    notes = cur.fetchall()
-                    result.append({
-                        'id': group['id'],
-                        'name': group['name'],
-                        'notes': [{'id': n['id'], 'content': n['content'], 'created_at': str(n['created_at'])} for n in notes]
-                    })
+                rows = cur.fetchall()
 
-                return result
+                # Group results by group_id
+                groups_dict = {}
+                for row in rows:
+                    group_id = row['group_id']
+                    if group_id not in groups_dict:
+                        groups_dict[group_id] = {
+                            'id': group_id,
+                            'name': row['group_name'],
+                            'notes': []
+                        }
+
+                    if row['note_id']:
+                        groups_dict[group_id]['notes'].append({
+                            'id': row['note_id'],
+                            'content': row['note_content'],
+                            'created_at': str(row['note_created_at'])
+                        })
+
+                return list(groups_dict.values())
 
     # Get notes by group
     def get_notes_by_group(self, user_id: str, group_id: Optional[int] = None) -> List[Dict]:
