@@ -6,13 +6,7 @@ set -e
 echo "🚀 Deploying to VPS (45.32.117.48)..."
 echo ""
 
-ssh root@45.32.117.48 << 'ENDSSH'
-cd /root/soul-mirror
-git pull
-docker-compose up -d --build
-echo ""
-echo "✅ Deployment complete!"
-ENDSSH
+ssh root@45.32.117.48 'cd /root/soul-mirror && ./scripts/deploy.sh'
 
 echo ""
 echo "🌐 Visit: http://45.32.117.48"
