@@ -56,8 +56,9 @@ apps/backend
 - Group-based notes system for organized information
 - Agent creates and manages groups to organize notes by topic
 - System groups (UPPERCASE): CONVERSATIONS
-- User groups (Capitalized): Interests, Work, Goals, Tasks, Events, People, Skills
+- Default user groups: Self-Improvement, Health & Lifestyle, Project Ideas, Work & Career, Language Learning, Relationships, Philosophy & Values, Location & Travel, Tasks & Reminders, Daily Reflections
 - Supports multi-user isolation via user_id
+- Initialize default groups via `/api/create-default-note-groups` or Dev panel
 
 ##### System Flow
 
@@ -84,14 +85,15 @@ apps/backend
 
 ```
 apps/backend/
-├── main.py              # FastAPI entry point
-├── agent.py             # LangChain personal assistant agent
+├── main.py                    # FastAPI entry point
+├── agent.py                   # LangChain personal assistant agent
+├── default-note-groups.json   # Default note groups definitions
 ├── tools/
-│   └── notes.py         # Notes management tool
+│   └── notes.py               # Notes management tool
 ├── scripts/
-│   └── dev.sh           # Development server script
-├── requirements.txt     # Python dependencies
-└── .env                 # Environment configuration
+│   └── dev.sh                 # Development server script
+├── requirements.txt           # Python dependencies
+└── .env                       # Environment configuration
 ```
 
 #### Tech Stack
@@ -115,6 +117,7 @@ All endpoints prefixed with `/api` and return JSON:
 - `GET /api/reset?user_id=id` - Reset all notes for user
 - `GET /api/reset-conversation?user_id=id` - Summarize and archive conversation, then reset
 - `GET /api/conversation-history?user_id=id` - Get current conversation history (debug)
+- `POST /api/create-default-note-groups?user_id=id` - Initialize default note groups from config
 - `GET /api/tools` - List available tools
 
 #### Development Commands
@@ -169,6 +172,7 @@ apps/frontend/
 │   │   ├── MainView.jsx           # Main page layout
 │   │   ├── ToolsView.jsx          # Tools page
 │   │   ├── TestsView.jsx          # Tests page
+│   │   ├── DevView.jsx            # Developer admin panel
 │   │   ├── NotesList.jsx          # Notes with collapsible groups
 │   │   ├── ChatInput.jsx          # Input with process/reset
 │   │   ├── ConversationHistory.jsx # Full conversation display
@@ -223,6 +227,7 @@ cp .env.example .env
 - Soul Mirror (main interaction)
 - Tools (available agent tools)
 - Tests (test runner interface)
+- Dev (developer admin panel)
 
 #### Features
 
@@ -232,6 +237,7 @@ cp .env.example .env
 - Keyboard shortcuts: Enter = submit, Shift+Enter = new line, Esc = clear
 - Fixed-height layout with independent scrolling
 - Large fonts, emojis, generous spacing
+- Dev panel for admin operations (create default note groups)
 
 ### Telegram Bot (Python)
 
@@ -413,4 +419,3 @@ VPS deployment using Docker Compose and nginx reverse proxy. See `infra/README.m
 ```bash
 ./scripts/deploy-remote.sh
 ```
-
