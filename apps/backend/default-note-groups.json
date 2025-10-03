@@ -1,0 +1,54 @@
+{
+  "groups": [
+    {
+      "id": "self-improvement",
+      "name": "Self-Improvement",
+      "description": "Behavioral observations, patterns to change, and tips for personal growth"
+    },
+    {
+      "id": "health",
+      "name": "Health & Lifestyle",
+      "description": "Sleep, diet, exercise, fasting experiments, and physical wellbeing"
+    },
+    {
+      "id": "project-ideas",
+      "name": "Project Ideas",
+      "description": "Product concepts, business ideas, and technical solutions to build"
+    },
+    {
+      "id": "work",
+      "name": "Work & Career",
+      "description": "Job search, freelancing, partnerships, and career decisions"
+    },
+    {
+      "id": "language",
+      "name": "Language Learning",
+      "description": "Spanish and English learning methods, vocabulary, and practice strategies"
+    },
+    {
+      "id": "relationships",
+      "name": "Relationships",
+      "description": "Social interactions, relationship reflections, and communication patterns"
+    },
+    {
+      "id": "philosophy",
+      "name": "Philosophy & Values",
+      "description": "Life reflections, identity, values, and worldview observations"
+    },
+    {
+      "id": "location",
+      "name": "Location & Travel",
+      "description": "Thoughts about different places and how they affect productivity and wellbeing"
+    },
+    {
+      "id": "tasks",
+      "name": "Tasks & Reminders",
+      "description": "Quick action items, technical questions, and things to do"
+    },
+    {
+      "id": "daily-reflections",
+      "name": "Daily Reflections",
+      "description": "Stream-of-consciousness updates, daily routines, and current state of mind"
+    }
+  ]
+}

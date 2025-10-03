@@ -80,6 +80,10 @@ class ApiService {
   async getConversationHistory() {
     return this.request('/api/conversation-history');
   }
+
+  async createDefaultNoteGroups() {
+    return this.request('/api/admin/create-default-note-groups');
+  }
 }
 
 export default new ApiService();

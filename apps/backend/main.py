@@ -4,8 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import os
+import json
 import uvicorn
 from dotenv import load_dotenv
+from pathlib import Path
 
 from agent import Agent
 from tools.notes import notes_manager
@@ -36,6 +38,11 @@ class ProcessResponse(BaseModel):
     input: str
     response: str
     user_id: str
+
+class NoteGroupRequest(BaseModel):
+    name: str
+    description: str
+    user_id: Optional[str] = "default"
 
 # API Endpoints
 @app.get("/api/status")
@@ -71,6 +78,19 @@ def process_post(request: ProcessRequest):
             response=response,
             user_id=request.user_id
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/note-groups")
+def create_note_group(request: NoteGroupRequest):
+    """Create a note group directly without agent processing"""
+    try:
+        result = notes_manager.add_group(request.user_id, request.name, request.description)
+        return {
+            "status": "success",
+            "message": result,
+            "user_id": request.user_id
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -177,6 +197,40 @@ def get_tools():
             }
         ]
     }
+
+@app.get("/api/admin/create-default-note-groups")
+def create_default_note_groups(user_id: str = "default"):
+    """Create default note groups from default-note-groups.json"""
+    try:
+        # Load default groups
+        groups_file = Path(__file__).parent / "default-note-groups.json"
+
+        if not groups_file.exists():
+            raise HTTPException(status_code=404, detail="default-note-groups.json not found")
+
+        with open(groups_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        groups = data["groups"]
+        created = []
+        skipped = []
+
+        for group in groups:
+            result = notes_manager.add_group(user_id, group["name"], group["description"])
+            if "already exists" in result:
+                skipped.append(group["name"])
+            else:
+                created.append(group["name"])
+
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "created": created,
+            "skipped": skipped,
+            "total": len(groups)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Root endpoint
 @app.get("/")
