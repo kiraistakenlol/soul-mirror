@@ -419,3 +419,4 @@ VPS deployment using Docker Compose and nginx reverse proxy. See `infra/README.m
 ```bash
 ./scripts/deploy-remote.sh
 ```
+
