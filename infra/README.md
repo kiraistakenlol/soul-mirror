@@ -97,11 +97,14 @@ Internet (port 80)
 nginx (reverse proxy)
     ├─→ /api/* → localhost:8080 (backend container)
     └─→ /*     → localhost:3000 (frontend container)
+                        ↓
+                PostgreSQL (localhost:5432)
 ```
 
 **Components:**
 - nginx: Listens on port 80, routes `/api/*` to backend, everything else to frontend
-- Docker Compose: Orchestrates backend (Python/FastAPI) and frontend (React/Vite) services
+- Docker Compose: Orchestrates backend (Python/FastAPI), frontend (React/Vite), and PostgreSQL services
+- PostgreSQL: Persistent storage for notes
 - Backend reads `.env` from `apps/backend/.env`
 
 ## Initial Setup
@@ -119,11 +122,14 @@ cd apps/backend
 cat > .env << 'EOF'
 LLM_PROVIDER=anthropic
 ANTHROPIC_API_KEY=<YOUR_API_KEY>
+DATABASE_URL=postgresql://soulmirror:soulmirror@postgres:5432/soulmirror
 PORT=8080
 ENVIRONMENT=production
 EOF
 cd ../..
 ```
+
+Note: `postgres` hostname resolves to PostgreSQL container via Docker network
 
 **3. Configure nginx**
 ```bash
@@ -146,6 +152,7 @@ ping6 -c 3 google.com
 ```bash
 ufw allow 80/tcp
 ufw allow 443/tcp
+ufw allow 5432/tcp  # PostgreSQL (for remote access from local)
 ufw status
 ```
 
@@ -154,11 +161,24 @@ ufw status
 docker-compose up -d
 ```
 
-**7. Verify**
+**7. Initialize database**
+```bash
+# Wait for PostgreSQL to be ready (15-30 seconds)
+sleep 20
+
+# Reset database (creates schema from baseline.sql)
+curl http://45.32.117.48/api/admin/database/reset
+
+# Create default note groups
+curl http://45.32.117.48/api/admin/create-default-note-groups
+```
+
+**8. Verify**
 ```bash
 docker-compose ps
 docker-compose logs -f
 curl http://45.32.117.48/api/status
+curl http://45.32.117.48/api/notes
 ```
 
 ## Deployment Scripts
@@ -174,6 +194,7 @@ curl http://45.32.117.48/api/status
 docker-compose logs -f           # all services
 docker-compose logs backend      # backend only
 docker-compose logs frontend     # frontend only
+docker-compose logs postgres     # database only
 ```
 
 **Restart services**
@@ -209,10 +230,20 @@ docker-compose logs backend
 docker-compose up -d --build
 ```
 
+**Database management**
+```bash
+# Reset database (drop all tables, recreate from baseline.sql)
+curl http://45.32.117.48/api/admin/database/reset
+
+# Connect to PostgreSQL
+docker-compose exec postgres psql -U soulmirror -d soulmirror
+```
+
 **Common issues**
 - Port conflicts: `netstat -tlnp | grep :8080` or `:3000`
 - Firewall blocking: `ufw status` (ensure port 80/443 allowed)
-- API not responding: Check backend logs and `.env` has API key
+- API not responding: Check backend logs and `.env` has API key and DATABASE_URL
+- Database connection errors: Ensure PostgreSQL container is running (`docker-compose ps`)
 - Changes not showing: Rebuild with `docker-compose up -d --build`
 - Docker build fails with "network is unreachable": Enable IPv6 in Vultr dashboard
 

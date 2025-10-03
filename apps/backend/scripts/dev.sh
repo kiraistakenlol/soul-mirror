@@ -5,6 +5,11 @@
 BACKEND_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$BACKEND_DIR"
 
+# Load .env file
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
+
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
     echo "Creating virtual environment..."

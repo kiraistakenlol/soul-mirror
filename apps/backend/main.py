@@ -11,8 +11,21 @@ from pathlib import Path
 
 from agent import Agent
 from tools.notes import notes_manager
+from repository.notes import NotesRepository
 
 load_dotenv()
+
+# Verify database connection on startup
+try:
+    repo = NotesRepository()
+    with repo._get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+    print("✓ Database connection successful")
+except Exception as e:
+    print(f"✗ Database connection failed: {e}")
+    print(f"  DATABASE_URL: {os.getenv('DATABASE_URL', 'NOT SET')}")
+    raise SystemExit(1)
 
 # Initialize FastAPI app
 app = FastAPI(title="Soul Mirror Backend", version="2.0.0")
@@ -228,6 +241,19 @@ def create_default_note_groups(user_id: str = "default"):
             "created": created,
             "skipped": skipped,
             "total": len(groups)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/database/reset")
+def reset_database():
+    """Reset database schema and apply baseline.sql"""
+    try:
+        repo = NotesRepository()
+        repo.reset_database()
+        return {
+            "status": "success",
+            "message": "Database reset successfully"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

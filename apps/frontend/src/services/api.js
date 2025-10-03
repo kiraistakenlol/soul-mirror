@@ -84,6 +84,10 @@ class ApiService {
   async createDefaultNoteGroups() {
     return this.request('/api/admin/create-default-note-groups');
   }
+
+  async resetDatabase() {
+    return this.request('/api/admin/database/reset');
+  }
 }
 
 export default new ApiService();

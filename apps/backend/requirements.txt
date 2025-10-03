@@ -5,3 +5,4 @@ langchain-anthropic
 fastapi
 uvicorn[standard]
 python-dotenv
+psycopg2-binary
