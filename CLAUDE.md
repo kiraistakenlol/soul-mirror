@@ -54,10 +54,11 @@ apps/backend
 
 **Notes Tool:**
 - Group-based notes system for organized information
+- PostgreSQL storage with repository pattern
 - Agent creates and manages groups to organize notes by topic
 - Default user groups: Self-Improvement, Health & Lifestyle, Project Ideas, Work & Career, Language Learning, Relationships, Philosophy & Values, Location & Travel, Tasks & Reminders, Daily Reflections
 - Supports multi-user isolation via user_id
-- Initialize default groups via `/api/create-default-note-groups` or Dev panel
+- Initialize default groups via `/api/admin/create-default-note-groups` or Dev panel
 
 ##### System Flow
 
@@ -86,9 +87,12 @@ apps/backend
 apps/backend/
 ├── main.py                    # FastAPI entry point
 ├── agent.py                   # LangChain personal assistant agent
+├── baseline.sql               # Database schema
 ├── default-note-groups.json   # Default note groups definitions
 ├── tools/
 │   └── notes.py               # Notes management tool
+├── repository/
+│   └── notes.py               # PostgreSQL data layer
 ├── scripts/
 │   └── dev.sh                 # Development server script
 ├── requirements.txt           # Python dependencies
@@ -104,6 +108,8 @@ apps/backend/
 - fastapi (API framework)
 - uvicorn (ASGI server)
 - pydantic (data validation)
+- psycopg2 (PostgreSQL driver)
+- postgresql (database)
 
 #### API Endpoints
 
@@ -112,12 +118,14 @@ All endpoints prefixed with `/api` and return JSON:
 - `GET /api/status` - System status and health
 - `GET /api/process?input=text&user_id=id` - Process input with personal assistant response
 - `POST /api/process` - Process input (JSON body with input and user_id)
+- `POST /api/note-groups` - Create note group directly (name, description, user_id)
 - `GET /api/notes?user_id=id&group_id=id` - Get all groups with nested notes for user
 - `GET /api/reset?user_id=id` - Reset all notes for user
 - `GET /api/reset-conversation?user_id=id` - Reset conversation history
 - `GET /api/conversation-history?user_id=id` - Get current conversation history (debug)
-- `POST /api/create-default-note-groups?user_id=id` - Initialize default note groups from config
 - `GET /api/tools` - List available tools
+- `GET /api/admin/create-default-note-groups?user_id=id` - Initialize default note groups from config
+- `GET /api/admin/database/reset` - Reset database schema and apply baseline.sql
 
 #### Development Commands
 
@@ -138,6 +146,7 @@ uvicorn main:app --reload --port 8080
 #### Configuration
 
 Environment variables:
+- `DATABASE_URL` - PostgreSQL connection string (required)
 - `LLM_PROVIDER` - Choose LLM provider: "anthropic" or "openai" (default: anthropic)
 - `ANTHROPIC_API_KEY` - Required when LLM_PROVIDER=anthropic
 - `OPENAI_API_KEY` - Required when LLM_PROVIDER=openai
@@ -147,8 +156,15 @@ Environment variables:
 Setup:
 ```bash
 cp .env.example .env
-# Set LLM_PROVIDER and add corresponding API key
+# Set DATABASE_URL and LLM_PROVIDER with corresponding API key
 ```
+
+#### Database
+
+PostgreSQL storage with schema management:
+- `baseline.sql` - Database schema (note_groups, notes tables)
+- Repository pattern in `repository/notes.py`
+- Manual schema reset via `/api/admin/database/reset`
 
 ### Frontend (React/Vite)
 
@@ -156,9 +172,9 @@ apps/frontend
 
 #### Tech Stack
 
-- react (19.x)
-- vite (dev server & build)
-- tailwindcss (styling)
+- react (19.1+)
+- vite (7.x dev server & build)
+- tailwindcss (4.x styling)
 
 #### Directory Structure
 
@@ -313,6 +329,7 @@ cp .env.example .env
 - Channel post support (bot as channel admin)
 - Direct message support
 - Replies include transcription for voice messages
+- Single shared user (no per-chat user_id)
 
 #### Setup in Telegram
 
@@ -402,6 +419,34 @@ curl http://localhost:8081/api/run-scenario?scenario_name=preference_learning
 - python (3.9+)
 - fastapi
 - langchain-anthropic (LLM evaluator)
+
+## Local Development
+
+### Docker Compose
+
+`docker-compose.yml` - Local multi-container setup:
+- postgres (port 5433)
+- backend (port 8080)
+- frontend (port 3000)
+- telegram-bot
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+### Scripts
+
+- `scripts/deploy-remote.sh` - Deploy to VPS
+- `scripts/deploy.sh` - Build and deploy containers
+- `scripts/setup-vps.sh` - Initial VPS setup
+- `scripts/db-copy.sh` - Copy database between environments
 
 ## Infrastructure & Deployment
 
