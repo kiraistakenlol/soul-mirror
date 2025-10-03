@@ -183,9 +183,17 @@ curl http://45.32.117.48/api/notes
 
 ## Deployment Scripts
 
-**Local → VPS:** `./scripts/deploy-remote.sh` - SSH to VPS, pull code, rebuild containers
+**From local machine:**
+```bash
+./scripts/deploy-remote.sh
+```
+SSH into VPS and executes deploy.sh remotely
 
-**On VPS:** `./scripts/deploy.sh` - Pull code, rebuild containers (run directly on server)
+**On VPS directly:**
+```bash
+./scripts/deploy.sh
+```
+Pulls latest code from git, stops containers, rebuilds and restarts them
 
 ## Management
 
@@ -277,5 +285,5 @@ Result: Access via https://soulmirror.kira.dev with auto-renewing SSL
 - `../docker-compose.yml` - Container orchestration
 - `../apps/backend/Dockerfile` - Backend image
 - `../apps/frontend/Dockerfile` - Frontend image
-- `../scripts/deploy.sh` - Deploy script (runs on VPS)
-- `../scripts/deploy-remote.sh` - Deploy script (runs locally, triggers VPS)
+- `../scripts/deploy.sh` - VPS deployment script (git pull, rebuild containers)
+- `../scripts/deploy-remote.sh` - Local script that SSH into VPS and executes deploy.sh
