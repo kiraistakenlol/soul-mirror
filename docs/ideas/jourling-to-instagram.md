@@ -1,0 +1,1 @@
+whis jourlaning idea can be mapped to instagram posts/stories creation with zero effort from user side : audio + photo

@@ -1,2 +1,0 @@
-- admin don't show error when backend returns error for /api/process
-- when prompt is sent in admin i want to be able to imput new prompt while current one is processing

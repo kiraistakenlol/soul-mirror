@@ -1,0 +1,1 @@
+new idea, what if we link every note to the request? 

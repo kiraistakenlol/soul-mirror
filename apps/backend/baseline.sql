@@ -21,3 +21,15 @@ CREATE TABLE notes (
 CREATE INDEX idx_note_groups_user_id ON note_groups(user_id);
 CREATE INDEX idx_notes_group_id ON notes(group_id);
 CREATE INDEX idx_notes_user_id ON notes(user_id);
+
+-- Requests table to log all incoming requests before agent processing
+CREATE TABLE requests (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    input TEXT NOT NULL,
+    response TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_requests_user_id ON requests(user_id);
+CREATE INDEX idx_requests_created_at ON requests(created_at);

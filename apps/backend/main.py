@@ -12,6 +12,7 @@ from pathlib import Path
 from agent import Agent
 from tools.notes import notes_manager
 from repository.notes import NotesRepository
+from repository.requests import RequestsRepository
 
 load_dotenv()
 
@@ -74,7 +75,18 @@ def process_get(input: str, user_id: str = "default"):
     """Process input via GET request"""
     try:
         print(f"📥 [GET] user={user_id} input=\"{input[:80]}{'...' if len(input) > 80 else ''}\"")
+
+        # Log request to database before processing
+        requests_repo = RequestsRepository()
+        request_id = requests_repo.log_request(user_id, input)
+        print(f"📝 Logged request id={request_id}")
+
+        # Process with agent
         response = agent.process_input(input, user_id)
+
+        # Update request with response
+        requests_repo.update_request_response(request_id, response)
+
         print(f"✓ Response: \"{response[:80]}{'...' if len(response) > 80 else ''}\"")
         return ProcessResponse(
             input=input,
@@ -90,7 +102,18 @@ def process_post(request: ProcessRequest):
     """Process input via POST request"""
     try:
         print(f"📥 [POST] user={request.user_id} input=\"{request.input[:80]}{'...' if len(request.input) > 80 else ''}\"")
+
+        # Log request to database before processing
+        requests_repo = RequestsRepository()
+        request_id = requests_repo.log_request(request.user_id, request.input)
+        print(f"📝 Logged request id={request_id}")
+
+        # Process with agent
         response = agent.process_input(request.input, request.user_id)
+
+        # Update request with response
+        requests_repo.update_request_response(request_id, response)
+
         print(f"✓ Response: \"{response[:80]}{'...' if len(response) > 80 else ''}\"")
         return ProcessResponse(
             input=request.input,
@@ -179,6 +202,20 @@ def get_conversation_history(user_id: str = "default"):
         "message_count": len(messages),
         "messages": messages
     }
+
+@app.get("/api/requests")
+def get_requests(user_id: str = "default", limit: int = 100):
+    """Get recent requests history for a user"""
+    try:
+        requests_repo = RequestsRepository()
+        requests = requests_repo.get_recent_requests(user_id, limit)
+        return {
+            "user_id": user_id,
+            "count": len(requests),
+            "requests": requests
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/tools")

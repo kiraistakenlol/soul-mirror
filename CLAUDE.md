@@ -62,6 +62,12 @@ apps/backend
 - Supports multi-user isolation via user_id
 - Initialize default groups via `/api/admin/create-default-note-groups` or Dev panel
 
+**Request Logging:**
+- Automatic logging of all user requests and agent responses
+- Stored in PostgreSQL requests table
+- Browse history via Requests tab in frontend
+- Useful for debugging and understanding interaction patterns
+
 ##### System Flow
 
 ```
@@ -94,7 +100,8 @@ apps/backend/
 ├── tools/
 │   └── notes.py               # Notes management tool
 ├── repository/
-│   └── notes.py               # PostgreSQL data layer
+│   ├── notes.py               # PostgreSQL notes data layer
+│   └── requests.py            # PostgreSQL requests logging
 ├── scripts/
 │   └── dev.sh                 # Development server script
 ├── requirements.txt           # Python dependencies
@@ -125,6 +132,7 @@ All endpoints prefixed with `/api` and return JSON:
 - `GET /api/reset?user_id=id` - Reset all notes for user
 - `GET /api/reset-conversation?user_id=id` - Reset conversation history
 - `GET /api/conversation-history?user_id=id` - Get current conversation history (debug)
+- `GET /api/requests?limit=n` - Get recent requests with responses
 - `GET /api/tools` - List available tools
 - `GET /api/admin/create-default-note-groups?user_id=id` - Initialize default note groups from config
 - `GET /api/admin/database/reset` - Reset database schema and apply baseline.sql
@@ -164,8 +172,8 @@ cp .env.example .env
 #### Database
 
 PostgreSQL storage with schema management:
-- `baseline.sql` - Database schema (note_groups with description/custom_rules, notes tables)
-- Repository pattern in `repository/notes.py`
+- `baseline.sql` - Database schema (note_groups, notes, requests tables)
+- Repository pattern in `repository/notes.py` and `repository/requests.py`
 - Manual schema reset via `/api/admin/database/reset`
 
 ### Frontend (React/Vite)
@@ -189,16 +197,17 @@ apps/frontend/
 │   │   ├── MainView.jsx           # Main page layout
 │   │   ├── ToolsView.jsx          # Tools page
 │   │   ├── TestsView.jsx          # Tests page
+│   │   ├── RequestsView.jsx       # Request history browser
 │   │   ├── DevView.jsx            # Developer admin panel
 │   │   ├── NotesList.jsx          # Notes with collapsible groups
-│   │   ├── ChatInput.jsx          # Input with process/reset
+│   │   ├── ChatInput.jsx          # Input with process/reset and error display
 │   │   ├── ConversationHistory.jsx # Full conversation display
 │   │   ├── ResponseDisplay.jsx
 │   │   ├── Tests.jsx
 │   │   ├── TestScenario.jsx
 │   │   └── Tools.jsx
 │   ├── services/
-│   │   └── api.js
+│   │   └── api.js                 # API client with improved error handling
 │   ├── App.jsx
 │   ├── main.jsx
 │   └── index.css
@@ -244,6 +253,7 @@ cp .env.example .env
 - Soul Mirror (main interaction)
 - Tools (available agent tools)
 - Tests (test runner interface)
+- Requests (browse request history)
 - Dev (developer admin panel)
 
 #### Features
@@ -251,10 +261,13 @@ cp .env.example .env
 - Collapsible note groups (collapsed by default)
 - Shows custom_rules for groups when expanded
 - Full conversation history (no truncation)
-- Auto-refresh: notes (10s), status (30s), conversation (5s)
+- Auto-refresh: notes (10s), status (30s), conversation (5s), requests (5s)
 - Keyboard shortcuts: Enter = submit, Shift+Enter = new line, Esc = clear
 - Fixed-height layout with independent scrolling
 - Large fonts, emojis, generous spacing
+- Error display with dismissible alerts
+- Concurrent input (can type while processing)
+- Request history browser with auto-refresh
 - Dev panel for admin operations (create default note groups)
 
 ### Telegram Bot (Python)

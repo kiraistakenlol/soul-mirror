@@ -7,21 +7,28 @@ export default function ChatInput() {
   const [input, setInput] = useState('');
   const [processing, setProcessing] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [error, setError] = useState(null);
   const textareaRef = useRef(null);
 
   async function handleSubmit() {
     if (!input.trim() || processing) return;
 
     setProcessing(true);
+    setError(null);
+
+    const submittedInput = input;
+    setInput(''); // Clear input immediately to allow new input
+
     try {
-      await api.processInput(input);
-      setInput('');
+      await api.processInput(submittedInput);
 
       // Refresh notes and history
       window.refreshNotes?.();
       window.refreshHistory?.();
     } catch (error) {
       console.error('Failed to process input:', error);
+      setError(error.message || 'Failed to process input');
+      setInput(submittedInput); // Restore input on error
     } finally {
       setProcessing(false);
     }
@@ -31,6 +38,7 @@ export default function ChatInput() {
     if (resetting) return;
 
     setResetting(true);
+    setError(null);
     try {
       await api.resetConversation();
 
@@ -39,6 +47,7 @@ export default function ChatInput() {
       window.refreshHistory?.();
     } catch (error) {
       console.error('Failed to reset conversation:', error);
+      setError(error.message || 'Failed to reset conversation');
     } finally {
       setResetting(false);
     }
@@ -55,6 +64,18 @@ export default function ChatInput() {
 
   return (
     <div className="bg-gray-950 border-t border-gray-800 p-3">
+        {error && (
+          <div className="mb-3 bg-red-900/20 border border-red-600 text-red-400 px-4 py-2 rounded-lg flex items-center gap-2">
+            <span className="text-lg">⚠️</span>
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400 hover:text-red-300"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <div className="flex gap-3 items-end">
           <div className="flex-1">
             <textarea
@@ -65,7 +86,6 @@ export default function ChatInput() {
               placeholder="💭 Type a thought, idea, or goal... (Enter = send, Shift+Enter = new line, Esc = clear)"
               className="w-full bg-gray-900 text-gray-100 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none border border-gray-700"
               rows={3}
-              disabled={processing}
             />
           </div>
 

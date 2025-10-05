@@ -15,7 +15,20 @@ class ApiService {
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      let errorMessage = `API error: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.detail) {
+          errorMessage = errorData.detail;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch {
+        // If response is not JSON, keep the default error message
+      }
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -87,6 +100,10 @@ class ApiService {
 
   async resetDatabase() {
     return this.request('/api/admin/database/reset');
+  }
+
+  async getRequests(limit = 100) {
+    return this.request(`/api/requests?limit=${limit}`);
   }
 }
 

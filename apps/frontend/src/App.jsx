@@ -7,11 +7,13 @@ import MainView from './components/MainView';
 import ToolsView from './components/ToolsView';
 import TestsView from './components/TestsView';
 import DevView from './components/DevView';
+import RequestsView from './components/RequestsView';
 
 const TABS = [
   { id: 'main', label: 'Soul Mirror', icon: '🧠' },
   { id: 'tools', label: 'Tools', icon: '🛠️' },
   { id: 'tests', label: 'Tests', icon: '🧪' },
+  { id: 'requests', label: 'Requests', icon: '📝' },
   { id: 'dev', label: 'Dev', icon: '⚙️' },
 ];
 
@@ -27,6 +29,7 @@ export default function App() {
         {activeTab === 'main' && <MainView />}
         {activeTab === 'tools' && <ToolsView />}
         {activeTab === 'tests' && <TestsView />}
+        {activeTab === 'requests' && <RequestsView />}
         {activeTab === 'dev' && <DevView />}
       </div>
     </div>
