@@ -56,6 +56,8 @@ apps/backend
 - Group-based notes system for organized information
 - PostgreSQL storage with repository pattern
 - Agent creates and manages groups to organize notes by topic
+- Groups have `description` (required) and `custom_rules` (optional) fields
+- Agent sees and follows custom_rules when managing notes in each group
 - Default user groups: Self-Improvement, Health & Lifestyle, Project Ideas, Work & Career, Language Learning, Relationships, Philosophy & Values, Location & Travel, Tasks & Reminders, Daily Reflections
 - Supports multi-user isolation via user_id
 - Initialize default groups via `/api/admin/create-default-note-groups` or Dev panel
@@ -118,7 +120,7 @@ All endpoints prefixed with `/api` and return JSON:
 - `GET /api/status` - System status and health
 - `GET /api/process?input=text&user_id=id` - Process input with personal assistant response
 - `POST /api/process` - Process input (JSON body with input and user_id)
-- `POST /api/note-groups` - Create note group directly (name, description, user_id)
+- `POST /api/note-groups` - Create note group directly (name, description, custom_rules, user_id)
 - `GET /api/notes?user_id=id&group_id=id` - Get all groups with nested notes for user
 - `GET /api/reset?user_id=id` - Reset all notes for user
 - `GET /api/reset-conversation?user_id=id` - Reset conversation history
@@ -162,7 +164,7 @@ cp .env.example .env
 #### Database
 
 PostgreSQL storage with schema management:
-- `baseline.sql` - Database schema (note_groups, notes tables)
+- `baseline.sql` - Database schema (note_groups with description/custom_rules, notes tables)
 - Repository pattern in `repository/notes.py`
 - Manual schema reset via `/api/admin/database/reset`
 
@@ -247,6 +249,7 @@ cp .env.example .env
 #### Features
 
 - Collapsible note groups (collapsed by default)
+- Shows custom_rules for groups when expanded
 - Full conversation history (no truncation)
 - Auto-refresh: notes (10s), status (30s), conversation (5s)
 - Keyboard shortcuts: Enter = submit, Shift+Enter = new line, Esc = clear

@@ -7,7 +7,7 @@ class NotesManager:
         self.repo = NotesRepository()
 
     def list_groups(self, user_id: str) -> str:
-        """List all groups with descriptions"""
+        """List all groups with descriptions and rules"""
         print(f"    🔧 list_groups(user={user_id})")
         groups = self.repo.get_all_groups_with_notes(user_id)
 
@@ -18,16 +18,19 @@ class NotesManager:
         result = []
         for group in groups:
             note_count = len(group['notes'])
-            result.append(f"- [{group['id']}] {group['name']} ({note_count} notes)")
+            group_info = f"- [{group['id']}] {group['name']}: {group['description']} ({note_count} notes)"
+            if group['custom_rules']:
+                group_info += f"\n  Rules: {group['custom_rules']}"
+            result.append(group_info)
 
         print(f"    ↳ Found {len(groups)} groups")
         return "\n".join(result)
 
-    def add_group(self, user_id: str, name: str, description: str = "") -> str:
+    def add_group(self, user_id: str, name: str, description: str, custom_rules: Optional[str] = None) -> str:
         """Create a new group"""
         print(f"    🔧 add_group(user={user_id}, name=\"{name}\")")
         try:
-            group_id = self.repo.get_or_create_group(user_id, name)
+            group_id = self.repo.get_or_create_group(user_id, name, description, custom_rules)
             print(f"    ↳ Created group [{group_id}]")
             return f"Created group [{group_id}] {name}"
         except Exception as e:
@@ -43,35 +46,34 @@ class NotesManager:
         return "Group removal not implemented yet"
 
     def list_notes(self, user_id: str, group_id: Optional[int] = None) -> str:
-        """List all notes, optionally filtered by group"""
+        """List all notes with IDs, optionally filtered by group"""
         print(f"    🔧 list_notes(user={user_id}, group={group_id or 'all'})")
-        if group_id:
-            notes = self.repo.get_notes_by_group(user_id, group_id)
-            if not notes:
-                print(f"    ↳ No notes in group")
-                return f"No notes in group {group_id}."
-            print(f"    ↳ Found {len(notes)} notes")
-            return "\n".join([f"- {note}" for note in notes])
 
         groups = self.repo.get_all_groups_with_notes(user_id)
         if not groups:
             print(f"    ↳ No notes found")
             return "No notes found."
 
+        # Filter to specific group if requested
+        if group_id:
+            groups = [g for g in groups if g['id'] == group_id]
+            if not groups:
+                print(f"    ↳ No notes in group")
+                return f"No notes in group {group_id}."
+
         result = []
         total_notes = 0
         for group in groups:
             if group['notes']:
-                result.append(f"\n{group['name']}:")
                 for note in group['notes']:
-                    result.append(f"  - [{note['id']}] {note['content']}")
+                    result.append(f"- [{note['id']}] {note['content']}")
                     total_notes += 1
 
         if not result:
             print(f"    ↳ No notes found")
-            return "No notes found."
+            return "No notes in group." if group_id else "No notes found."
 
-        print(f"    ↳ Found {total_notes} notes across {len(groups)} groups")
+        print(f"    ↳ Found {total_notes} notes")
         return "\n".join(result)
 
     def add_note(self, user_id: str, content: str, group_id: int) -> str:
@@ -97,7 +99,7 @@ class NotesManager:
     def _get_user_data(self, user_id: str):
         """Legacy method for compatibility with main.py - returns groups dict"""
         groups = self.repo.get_all_groups_with_notes(user_id)
-        # Convert to old format: {group_id: {name, notes: {note_id: {content, ...}}}}
+        # Convert to old format: {group_id: {name, description, custom_rules, notes: {note_id: {content, ...}}}}
         result = {}
         for group in groups:
             notes_dict = {}
@@ -110,6 +112,8 @@ class NotesManager:
             result[str(group['id'])] = {
                 'id': group['id'],
                 'name': group['name'],
+                'description': group['description'],
+                'custom_rules': group['custom_rules'],
                 'notes': notes_dict
             }
         return result

@@ -89,6 +89,11 @@ export default function NotesList() {
 
                   {isExpanded && (
                     <div className="space-y-3">
+                      {group.custom_rules && (
+                        <div className="bg-gray-750 rounded p-3 mb-3 text-sm text-gray-400 italic border-l-2 border-blue-500">
+                          {group.custom_rules}
+                        </div>
+                      )}
                       {notesArray.length === 0 ? (
                         <div className="text-gray-500 text-sm italic">No notes in this group</div>
                       ) : (

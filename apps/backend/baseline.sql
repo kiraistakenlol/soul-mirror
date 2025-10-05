@@ -4,6 +4,8 @@ CREATE TABLE note_groups (
     id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL,
     name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    custom_rules TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, name)
 );

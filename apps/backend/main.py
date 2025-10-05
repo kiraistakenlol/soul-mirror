@@ -55,6 +55,7 @@ class ProcessResponse(BaseModel):
 class NoteGroupRequest(BaseModel):
     name: str
     description: str
+    custom_rules: Optional[str] = None
     user_id: Optional[str] = "default"
 
 # API Endpoints
@@ -65,7 +66,7 @@ def get_status():
         "status": "healthy",
         "version": "2.0.0",
         "agent": "langgraph",
-        "tools": ["list_groups", "add_group", "remove_group", "list_notes", "add_note", "remove_note"]
+        "tools": ["list_groups", "add_group", "remove_group", "list_notes", "add_note", "update_note", "remove_note"]
     }
 
 @app.get("/api/process")
@@ -104,7 +105,7 @@ def process_post(request: ProcessRequest):
 def create_note_group(request: NoteGroupRequest):
     """Create a note group directly without agent processing"""
     try:
-        result = notes_manager.add_group(request.user_id, request.name, request.description)
+        result = notes_manager.add_group(request.user_id, request.name, request.description, request.custom_rules)
         return {
             "status": "success",
             "message": result,
@@ -210,6 +211,11 @@ def get_tools():
                 "parameters": ["content", "group_id"]
             },
             {
+                "name": "update_note",
+                "description": "Update an existing note's content",
+                "parameters": ["note_id", "new_content"]
+            },
+            {
                 "name": "remove_note",
                 "description": "Remove a note by its ID",
                 "parameters": ["note_id"]
@@ -235,7 +241,7 @@ def create_default_note_groups(user_id: str = "default"):
         skipped = []
 
         for group in groups:
-            result = notes_manager.add_group(user_id, group["name"], group["description"])
+            result = notes_manager.add_group(user_id, group["name"], group["description"], group.get("customRules"))
             if "already exists" in result:
                 skipped.append(group["name"])
             else:

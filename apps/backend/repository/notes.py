@@ -14,12 +14,12 @@ class NotesRepository:
         return psycopg2.connect(self.connection_string)
 
     # Get or create note group
-    def get_or_create_group(self, user_id: str, group_name: str) -> int:
+    def get_or_create_group(self, user_id: str, group_name: str, description: str = "", custom_rules: Optional[str] = None) -> int:
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
-                    "INSERT INTO note_groups (user_id, name) VALUES (%s, %s) ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name RETURNING id",
-                    (user_id, group_name)
+                    "INSERT INTO note_groups (user_id, name, description, custom_rules) VALUES (%s, %s, %s, %s) ON CONFLICT (user_id, name) DO UPDATE SET description = EXCLUDED.description, custom_rules = EXCLUDED.custom_rules RETURNING id",
+                    (user_id, group_name, description, custom_rules)
                 )
                 result = cur.fetchone()
                 conn.commit()
@@ -45,6 +45,8 @@ class NotesRepository:
                     SELECT
                         g.id as group_id,
                         g.name as group_name,
+                        g.description as group_description,
+                        g.custom_rules as group_custom_rules,
                         n.id as note_id,
                         n.content as note_content,
                         n.created_at as note_created_at
@@ -64,6 +66,8 @@ class NotesRepository:
                         groups_dict[group_id] = {
                             'id': group_id,
                             'name': row['group_name'],
+                            'description': row['group_description'],
+                            'custom_rules': row['group_custom_rules'],
                             'notes': []
                         }
 
@@ -123,13 +127,13 @@ class NotesRepository:
                 conn.commit()
 
     # Create default note groups
-    def create_default_groups(self, user_id: str, group_names: List[str]):
+    def create_default_groups(self, user_id: str, groups: List[Dict]):
         with self._get_connection() as conn:
             with conn.cursor() as cur:
-                for name in group_names:
+                for group in groups:
                     cur.execute(
-                        "INSERT INTO note_groups (user_id, name) VALUES (%s, %s) ON CONFLICT (user_id, name) DO NOTHING",
-                        (user_id, name)
+                        "INSERT INTO note_groups (user_id, name, description, custom_rules) VALUES (%s, %s, %s, %s) ON CONFLICT (user_id, name) DO NOTHING",
+                        (user_id, group['name'], group['description'], group.get('customRules'))
                     )
                 conn.commit()
 

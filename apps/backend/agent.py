@@ -22,15 +22,16 @@ def list_groups(config: RunnableConfig) -> str:
     return notes_manager.list_groups(user_id)
 
 @tool
-def add_group(name: str, description: str, config: RunnableConfig) -> str:
+def add_group(name: str, description: str, custom_rules: str = None, config: RunnableConfig = None) -> str:
     """Create a new group for organizing notes
 
     Args:
         name: Unique name for the group
         description: What this group is for
+        custom_rules: Optional rules for how to manage notes in this group
     """
     user_id = config.get("configurable", {}).get("user_id", "default")
-    return notes_manager.add_group(user_id, name, description)
+    return notes_manager.add_group(user_id, name, description, custom_rules)
 
 @tool
 def remove_group(group_id: str, config: RunnableConfig) -> str:
@@ -50,7 +51,8 @@ def list_notes(group_id: str = None, config: RunnableConfig = None) -> str:
         group_id: Optional group ID to filter notes
     """
     user_id = config.get("configurable", {}).get("user_id", "default")
-    return notes_manager.list_notes(user_id, group_id)
+    group_id_int = int(group_id) if group_id else None
+    return notes_manager.list_notes(user_id, group_id_int)
 
 @tool
 def add_note(content: str, group_id: str, config: RunnableConfig) -> str:
@@ -61,7 +63,20 @@ def add_note(content: str, group_id: str, config: RunnableConfig) -> str:
         group_id: The ID of the group to add the note to
     """
     user_id = config.get("configurable", {}).get("user_id", "default")
-    return notes_manager.add_note(user_id, content, group_id)
+    return notes_manager.add_note(user_id, content, int(group_id))
+
+@tool
+def update_note(note_id: str, new_content: str, config: RunnableConfig) -> str:
+    """Update an existing note's content
+
+    Args:
+        note_id: The ID of the note to update
+        new_content: The new content for the note
+    """
+    user_id = config.get("configurable", {}).get("user_id", "default")
+    if notes_manager.repo.update_note(user_id, int(note_id), new_content):
+        return f"Updated note [{note_id}]"
+    return f"Note {note_id} not found."
 
 @tool
 def remove_note(note_id: str, config: RunnableConfig) -> str:
@@ -71,10 +86,10 @@ def remove_note(note_id: str, config: RunnableConfig) -> str:
         note_id: The ID of the note to remove
     """
     user_id = config.get("configurable", {}).get("user_id", "default")
-    return notes_manager.remove_note(user_id, note_id)
+    return notes_manager.remove_note(user_id, int(note_id))
 
 # Collect all tools
-tools = [list_groups, add_group, remove_group, list_notes, add_note, remove_note]
+tools = [list_groups, add_group, remove_group, list_notes, add_note, update_note, remove_note]
 
 class Agent:
     def __init__(self):
@@ -112,8 +127,31 @@ class Agent:
             messages = state["messages"]
             print("  🤖 Calling LLM...")
             response = self.llm_with_tools.invoke(messages)
-            print(f"  💭 LLM response: {response.content[:60] if hasattr(response, 'content') and response.content else 'tool_calls'}")
+
+            if hasattr(response, 'content') and response.content:
+                print(f"  💭 LLM response: {response.content[:100]}")
+            elif hasattr(response, "tool_calls") and response.tool_calls:
+                tool_summary = ", ".join([f"{tc['name']}({', '.join(f'{k}={v}' for k,v in tc['args'].items())})" for tc in response.tool_calls])
+                print(f"  💭 LLM tool calls: {tool_summary}")
+            else:
+                print(f"  💭 LLM response: (empty)")
+
             return {"messages": [response]}
+
+        # Custom tool node with logging
+        def call_tools(state: MessagesState):
+            # Call tools
+            tool_node = ToolNode(tools)
+            result = tool_node.invoke(state)
+
+            # Log tool results
+            if "messages" in result:
+                for msg in result["messages"]:
+                    if hasattr(msg, "content"):
+                        content_preview = msg.content[:200] if len(msg.content) > 200 else msg.content
+                        print(f"  ✅ Tool returned: {content_preview}")
+
+            return result
 
         # Define routing logic
         def should_continue(state: MessagesState) -> Literal["tools", "end"]:
@@ -131,7 +169,7 @@ class Agent:
 
         # Add nodes to the graph
         workflow.add_node("agent", call_model)
-        workflow.add_node("tools", ToolNode(tools))
+        workflow.add_node("tools", call_tools)
 
         # Add edges
         workflow.add_edge(START, "agent")
@@ -167,8 +205,11 @@ ORGANIZATION WORKFLOW:
 
 DECISION TREE FOR EVERY INPUT:
 
-1. list_groups() to see what's organized
-2. list_notes() to understand context
+1. list_groups() to see what's organized (includes descriptions and custom_rules)
+2. Before adding a note:
+   - Find the right group for the note's topic
+   - Check existing notes in that group with list_notes(group_id)
+   - If group has custom_rules, follow them strictly
 3. Analyze the input:
    - What topic does this relate to?
    - Is there a group for this? If not, create one
@@ -209,7 +250,8 @@ CRITICAL RULES:
 - Keep groups well-organized and clearly described
 - Remove redundant or outdated notes
 - Use groups to quickly find relevant context
-- Execute clear commands directly without asking for confirmation
+- NEVER ask for confirmation - execute actions immediately
+- NEVER ask follow-up questions - just do what was asked
 - ONLY do what was explicitly asked - never add extra notes or take additional actions""")
 
         # Get or initialize conversation history for this user
