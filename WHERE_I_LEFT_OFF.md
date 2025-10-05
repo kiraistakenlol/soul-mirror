@@ -1,1 +1,1 @@
-idea: what if i link notest to request?
+idea: what if i link notest to request? (look idea)
