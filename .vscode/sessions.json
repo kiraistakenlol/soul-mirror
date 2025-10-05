@@ -26,11 +26,11 @@
             },
             {
                 "name": "Test Runner",
-                "autoExecuteCommands": true,
+                "autoExecuteCommands": false,
                 "icon": "beaker",
                 "color": "terminal.ansiYellow",
                 "commands": [
-                    "cd apps/test-runner && ./scripts/dev.sh"
+                    "cd apps/test-runner"
                 ]
             },
             {
@@ -44,11 +44,11 @@
             },
             {
                 "name": "Telegram Bot",
-                "autoExecuteCommands": true,
+                "autoExecuteCommands": false,
                 "icon": "comment",
                 "color": "terminal.ansiCyan",
                 "commands": [
-                    "cd apps/telegram-bot && ./scripts/dev.sh"
+                    "cd apps/telegram-bot"
                 ]
             },
             {
@@ -59,6 +59,13 @@
                 "commands": [
                     "ssh root@45.32.117.48"
                 ]
+            },
+            {
+                "name": "Terminal",
+                "autoExecuteCommands": false,
+                "icon": "terminal",
+                "color": "terminal.ansiWhite",
+                "commands": []
             }
         ]
     }
