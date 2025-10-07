@@ -26,7 +26,10 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./apps/frontend
+    build:
+      context: ./apps/frontend
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8080}
     ports:
       - "3000:3000"
     restart: unless-stopped

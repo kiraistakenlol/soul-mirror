@@ -3,10 +3,10 @@
 
 set -e
 
-echo "🚀 Deploying to VPS (45.32.117.48)..."
+echo "🚀 Deploying to VPS..."
 echo ""
 
 ssh root@45.32.117.48 'cd /root/soul-mirror && ./scripts/deploy.sh'
 
 echo ""
-echo "🌐 Visit: http://45.32.117.48"
+echo "🌐 Visit: http://soulmirror.kiraistaken.lol"

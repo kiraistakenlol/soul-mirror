@@ -14,7 +14,7 @@ echo "🛑 Stopping containers..."
 docker-compose down
 
 echo "🐳 Building and starting containers..."
-docker-compose up -d --build
+docker-compose --env-file .env.production up -d --build
 
 echo ""
 echo "✅ Deployment complete!"
