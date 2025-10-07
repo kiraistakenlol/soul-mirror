@@ -35,23 +35,23 @@ class ApiService {
   }
 
   async getStatus() {
-    return this.request('/api/status');
+    return this.request('/status');
   }
 
   async getNotes() {
-    return this.request('/api/notes');
+    return this.request('/notes');
   }
 
   async getTools() {
-    return this.request('/api/tools');
+    return this.request('/tools');
   }
 
   async processInput(input) {
-    return this.request(`/api/process?input=${encodeURIComponent(input)}`);
+    return this.request(`/process?input=${encodeURIComponent(input)}`);
   }
 
   async processInputPost(input) {
-    return this.request('/api/process', {
+    return this.request('/process', {
       method: 'POST',
       body: JSON.stringify({ input }),
     });
@@ -87,23 +87,23 @@ class ApiService {
   }
 
   async resetConversation() {
-    return this.request('/api/reset-conversation');
+    return this.request('/reset-conversation');
   }
 
   async getConversationHistory() {
-    return this.request('/api/conversation-history');
+    return this.request('/conversation-history');
   }
 
   async createDefaultNoteGroups() {
-    return this.request('/api/admin/create-default-note-groups');
+    return this.request('/admin/create-default-note-groups');
   }
 
   async resetDatabase() {
-    return this.request('/api/admin/database/reset');
+    return this.request('/admin/database/reset');
   }
 
   async getRequests(limit = 100) {
-    return this.request(`/api/requests?limit=${limit}`);
+    return this.request(`/requests?limit=${limit}`);
   }
 }
 
