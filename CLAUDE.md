@@ -459,24 +459,34 @@ docker-compose down
 
 ### Scripts
 
-- `scripts/deploy-remote.sh` - Deploy to VPS
-- `scripts/deploy.sh` - Build and deploy containers
-- `scripts/setup-vps.sh` - Initial VPS setup
+- `scripts/deploy-remote.sh` - Deploy to VPS from local
+- `scripts/deploy.sh` - Build and deploy containers (runs on VPS)
 - `scripts/db-copy.sh` - Copy database between environments
 
-## Infrastructure & Deployment
+## Deployment
 
-infra/
+**VPS:** 45.32.117.48 (kiraistaken.lol)
+**Production URLs:**
+- Frontend: http://soulmirror.kiraistaken.lol
+- API: http://api.soulmirror.kiraistaken.lol
 
-VPS deployment using Docker Compose and nginx reverse proxy. See `infra/README.md` for:
-- Architecture overview
-- Initial setup steps
-- Deployment scripts
-- Management commands
-- Troubleshooting
+**Infrastructure:** Managed in separate repo `https://github.com/kiraistakenlol/infra` (nginx configs, VPS bootstrap)
 
-**Quick deploy from local:**
+**Deploy from local:**
 ```bash
 ./scripts/deploy-remote.sh
+```
+
+Runs on VPS:
+- Pulls latest code
+- Stops containers
+- Rebuilds with production API URL
+- Restarts all services
+
+**Manual deploy on VPS:**
+```bash
+ssh root@45.32.117.48
+cd /root/soul-mirror
+./scripts/deploy.sh
 ```
 
