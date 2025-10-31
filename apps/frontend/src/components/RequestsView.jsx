@@ -8,6 +8,7 @@ export default function RequestsView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [expandedTraces, setExpandedTraces] = useState({});
 
   const fetchRequests = async () => {
     try {
@@ -34,6 +35,13 @@ export default function RequestsView() {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString();
+  };
+
+  const toggleTraces = (requestId) => {
+    setExpandedTraces(prev => ({
+      ...prev,
+      [requestId]: !prev[requestId]
+    }));
   };
 
   return (
@@ -97,11 +105,87 @@ export default function RequestsView() {
                 </div>
 
                 {request.response && (
-                  <div>
+                  <div className="mb-4">
                     <div className="text-sm font-semibold text-gray-400 mb-1">Response:</div>
                     <div className="text-green-300 bg-gray-800 rounded p-3 font-mono text-sm">
                       {request.response}
                     </div>
+                  </div>
+                )}
+
+                {request.llm_traces && request.llm_traces.length > 0 && (
+                  <div>
+                    <button
+                      onClick={() => toggleTraces(request.id)}
+                      className="flex items-center gap-2 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors mb-2"
+                    >
+                      <span>{expandedTraces[request.id] ? '▼' : '▶'}</span>
+                      <span>LLM Traces ({request.llm_traces.length})</span>
+                    </button>
+
+                    {expandedTraces[request.id] && (
+                      <div className="space-y-3 mt-3">
+                        {request.llm_traces.map((trace, idx) => (
+                          <div key={idx} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                            <div className="text-xs text-gray-500 mb-2">
+                              Trace #{idx + 1} • {trace.model}
+                            </div>
+
+                            {/* Messages sent to LLM */}
+                            {trace.messages && (
+                              <div className="mb-3">
+                                <div className="text-xs font-semibold text-purple-400 mb-1">Messages:</div>
+                                <div className="space-y-2">
+                                  {trace.messages[0]?.map((msg, msgIdx) => (
+                                    <div key={msgIdx} className="bg-gray-900 rounded p-2">
+                                      <div className="text-xs text-gray-500 mb-1">{msg.role}</div>
+                                      <div className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
+                                        {typeof msg.content === 'string'
+                                          ? msg.content
+                                          : JSON.stringify(msg.content, null, 2)}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Response from LLM */}
+                            {trace.response && (
+                              <div>
+                                <div className="text-xs font-semibold text-green-400 mb-1">Response:</div>
+                                <div className="space-y-2">
+                                  {trace.response[0]?.map((resp, respIdx) => (
+                                    <div key={respIdx} className="bg-gray-900 rounded p-2">
+                                      {resp.role && (
+                                        <div className="text-xs text-gray-500 mb-1">{resp.role}</div>
+                                      )}
+                                      {resp.content && (
+                                        <div className="text-xs text-green-300 font-mono whitespace-pre-wrap mb-2">
+                                          {resp.content}
+                                        </div>
+                                      )}
+                                      {resp.tool_calls && resp.tool_calls.length > 0 && (
+                                        <div className="mt-2">
+                                          <div className="text-xs text-yellow-400 mb-1">Tool Calls:</div>
+                                          {resp.tool_calls.map((tc, tcIdx) => (
+                                            <div key={tcIdx} className="text-xs text-yellow-300 font-mono bg-gray-950 rounded p-2 mb-1">
+                                              <span className="text-yellow-400">{tc.name}</span>(
+                                              {JSON.stringify(tc.args, null, 2)}
+                                              )
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

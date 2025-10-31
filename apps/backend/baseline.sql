@@ -28,6 +28,7 @@ CREATE TABLE requests (
     user_id TEXT NOT NULL,
     input TEXT NOT NULL,
     response TEXT,
+    llm_traces JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

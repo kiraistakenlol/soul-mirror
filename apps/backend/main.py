@@ -11,8 +11,10 @@ from pathlib import Path
 
 from agent import Agent
 from tools.notes import notes_manager
+from tools.notebook_toolkit import NotebookToolkit
 from repository.notes import NotesRepository
 from repository.requests import RequestsRepository
+from llm_trace_callback import LLMTraceCallback
 
 load_dotenv()
 
@@ -81,11 +83,18 @@ def process_get(input: str, user_id: str = "default"):
         request_id = requests_repo.log_request(user_id, input)
         print(f"📝 Logged request id={request_id}")
 
-        # Process with agent
-        response = agent.process_input(input, user_id)
+        # Create callback to capture LLM traces
+        trace_callback = LLMTraceCallback()
 
-        # Update request with response
-        requests_repo.update_request_response(request_id, response)
+        # Process with agent
+        response = agent.process_input(input, user_id, callbacks=[trace_callback])
+
+        # Get captured traces
+        llm_traces = trace_callback.get_traces()
+        print(f"📊 Captured {len(llm_traces)} LLM interactions")
+
+        # Update request with response and traces
+        requests_repo.update_request_response(request_id, response, llm_traces)
 
         print(f"✓ Response: \"{response[:80]}{'...' if len(response) > 80 else ''}\"")
         return ProcessResponse(
@@ -108,11 +117,18 @@ def process_post(request: ProcessRequest):
         request_id = requests_repo.log_request(request.user_id, request.input)
         print(f"📝 Logged request id={request_id}")
 
-        # Process with agent
-        response = agent.process_input(request.input, request.user_id)
+        # Create callback to capture LLM traces
+        trace_callback = LLMTraceCallback()
 
-        # Update request with response
-        requests_repo.update_request_response(request_id, response)
+        # Process with agent
+        response = agent.process_input(request.input, request.user_id, callbacks=[trace_callback])
+
+        # Get captured traces
+        llm_traces = trace_callback.get_traces()
+        print(f"📊 Captured {len(llm_traces)} LLM interactions")
+
+        # Update request with response and traces
+        requests_repo.update_request_response(request_id, response, llm_traces)
 
         print(f"✓ Response: \"{response[:80]}{'...' if len(response) > 80 else ''}\"")
         return ProcessResponse(
@@ -220,42 +236,32 @@ def get_requests(user_id: str = "default", limit: int = 100):
 
 @app.get("/api/tools")
 def get_tools():
-    """List available tools"""
+    """List available tools organized by toolkit"""
+    notebook_toolkit = NotebookToolkit()
+    notebook_tools = notebook_toolkit.get_tools()
+
+    def tool_to_dict(tool):
+        """Convert tool to dict with name, description, and parameters"""
+        tool_dict = {
+            "name": tool.name,
+            "description": tool.description
+        }
+
+        # Extract parameters from tool schema if available
+        if hasattr(tool, 'args_schema') and tool.args_schema:
+            schema = tool.args_schema.model_json_schema()
+            if 'properties' in schema:
+                params = [name for name in schema['properties'].keys() if name != 'config']
+                if params:
+                    tool_dict['parameters'] = params
+
+        return tool_dict
+
     return {
-        "tools": [
+        "toolkits": [
             {
-                "name": "list_groups",
-                "description": "List all groups with their descriptions"
-            },
-            {
-                "name": "add_group",
-                "description": "Create a new group for organizing notes",
-                "parameters": ["name", "description"]
-            },
-            {
-                "name": "remove_group",
-                "description": "Remove a group and all its notes",
-                "parameters": ["group_id"]
-            },
-            {
-                "name": "list_notes",
-                "description": "List all notes, optionally filtered by group",
-                "parameters": ["group_id (optional)"]
-            },
-            {
-                "name": "add_note",
-                "description": "Add a note to a specific group",
-                "parameters": ["content", "group_id"]
-            },
-            {
-                "name": "update_note",
-                "description": "Update an existing note's content",
-                "parameters": ["note_id", "new_content"]
-            },
-            {
-                "name": "remove_note",
-                "description": "Remove a note by its ID",
-                "parameters": ["note_id"]
+                "name": "Notebook",
+                "tools": [tool_to_dict(tool) for tool in notebook_tools]
             }
         ]
     }

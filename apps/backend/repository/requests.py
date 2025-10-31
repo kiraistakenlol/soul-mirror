@@ -25,14 +25,21 @@ class RequestsRepository:
                 conn.commit()
                 return result['id']
 
-    # Update request with response
-    def update_request_response(self, request_id: int, response: str):
+    # Update request with response and LLM traces
+    def update_request_response(self, request_id: int, response: str, llm_traces: List[Dict] = None):
         with self._get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(
-                    "UPDATE requests SET response = %s WHERE id = %s",
-                    (response, request_id)
-                )
+                if llm_traces:
+                    import json
+                    cur.execute(
+                        "UPDATE requests SET response = %s, llm_traces = %s WHERE id = %s",
+                        (response, json.dumps(llm_traces), request_id)
+                    )
+                else:
+                    cur.execute(
+                        "UPDATE requests SET response = %s WHERE id = %s",
+                        (response, request_id)
+                    )
                 conn.commit()
 
     # Get recent requests for user
@@ -40,7 +47,7 @@ class RequestsRepository:
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
-                    "SELECT id, input, response, created_at FROM requests WHERE user_id = %s ORDER BY created_at DESC LIMIT %s",
+                    "SELECT id, input, response, llm_traces, created_at FROM requests WHERE user_id = %s ORDER BY created_at DESC LIMIT %s",
                     (user_id, limit)
                 )
                 return cur.fetchall()
