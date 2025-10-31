@@ -2,18 +2,36 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Current State (MVP)
+
+**Soul Mirror** is currently a note-taking system with an AI agent that organizes your thoughts into categorized groups.
+
+**What Works Now:**
+- Group-based notes organization with custom rules per group
+- AI agent that processes natural language input and creates/manages notes
+- Multi-user support with data isolation
+- Conversation history per user (in-memory)
+- Request logging for debugging
+- Telegram bot integration for voice and text input
+
+**What's Not Implemented Yet:**
+- User profile building from notes
+- Learning personality, interests, preferences over time
+- Personalized responses based on understanding of who you are
+- Emergent organization patterns
+
 ## Long-term Vision
 
-**Soul Mirror** is a personal assistant that learns who you are through your thoughts and notes, building deep understanding over time.
+**Soul Mirror** will become a personal assistant that learns who you are through your thoughts and notes, building deep understanding over time.
 
-**Core Approach:**
-The agent works like a real human assistant with a notebook - it remembers everything about you and organizes information naturally through experience. Uses a single notes system where everything lives together, building understanding through interaction patterns rather than rigid categorization.
+**Future Core Approach:**
+Like a real human assistant with a notebook - remembers everything about you and organizes information naturally through experience. Goes beyond note-taking to build understanding through interaction patterns.
 
-**Key Capabilities:**
-- **Memory Management**: Uses notes as primary memory system, like a human assistant's notebook
-- **Natural Learning**: Automatically updates understanding of your personality, interests, and preferences through interactions
-- **Contextual Intelligence**: References what it knows about you to provide more personalized responses
-- **Emergent Organization**: Develops its own organizational systems over time rather than using pre-defined categories
+**Future Key Capabilities:**
+- **Memory Management**: Notes as primary memory system (implemented)
+- **Natural Learning**: Automatically updates understanding of your personality, interests, preferences (not implemented)
+- **Contextual Intelligence**: References what it knows about you to provide personalized responses (not implemented)
+- **Emergent Organization**: Develops organizational systems over time rather than using pre-defined categories (not implemented)
 
 ## Project Rules
 
