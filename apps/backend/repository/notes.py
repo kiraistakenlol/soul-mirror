@@ -25,6 +25,17 @@ class NotesRepository:
                 conn.commit()
                 return result['id']
 
+    # Delete note group
+    def delete_group(self, user_id: str, group_id: int) -> bool:
+        with self._get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM note_groups WHERE id = %s AND user_id = %s",
+                    (group_id, user_id)
+                )
+                conn.commit()
+                return cur.rowcount > 0
+
     # Add note to group
     def add_note(self, user_id: str, group_id: int, content: str) -> int:
         with self._get_connection() as conn:
@@ -47,9 +58,12 @@ class NotesRepository:
                         g.name as group_name,
                         g.description as group_description,
                         g.custom_rules as group_custom_rules,
+                        g.created_at as group_created_at,
+                        g.updated_at as group_updated_at,
                         n.id as note_id,
                         n.content as note_content,
-                        n.created_at as note_created_at
+                        n.created_at as note_created_at,
+                        n.updated_at as note_updated_at
                     FROM note_groups g
                     LEFT JOIN notes n ON g.id = n.group_id
                     WHERE g.user_id = %s
@@ -68,6 +82,8 @@ class NotesRepository:
                             'name': row['group_name'],
                             'description': row['group_description'],
                             'custom_rules': row['group_custom_rules'],
+                            'created_at': str(row['group_created_at']),
+                            'updated_at': str(row['group_updated_at']),
                             'notes': []
                         }
 
@@ -75,7 +91,8 @@ class NotesRepository:
                         groups_dict[group_id]['notes'].append({
                             'id': row['note_id'],
                             'content': row['note_content'],
-                            'created_at': str(row['note_created_at'])
+                            'created_at': str(row['note_created_at']),
+                            'updated_at': str(row['note_updated_at'])
                         })
 
                 return list(groups_dict.values())
@@ -114,6 +131,17 @@ class NotesRepository:
                 cur.execute(
                     "DELETE FROM notes WHERE id = %s AND user_id = %s",
                     (note_id, user_id)
+                )
+                conn.commit()
+                return cur.rowcount > 0
+
+    # Move note to different group
+    def move_note(self, user_id: str, note_id: int, new_group_id: int) -> bool:
+        with self._get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE notes SET group_id = %s WHERE id = %s AND user_id = %s",
+                    (new_group_id, note_id, user_id)
                 )
                 conn.commit()
                 return cur.rowcount > 0

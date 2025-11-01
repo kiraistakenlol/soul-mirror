@@ -18,7 +18,7 @@ class NotesManager:
         result = []
         for group in groups:
             note_count = len(group['notes'])
-            group_info = f"- [{group['id']}] {group['name']}: {group['description']} ({note_count} notes)"
+            group_info = f"- [{group['id']}] {group['name']}: {group['description']} ({note_count} notes, created: {group['created_at']}, updated: {group['updated_at']})"
             if group['custom_rules']:
                 group_info += f"\n  Rules: {group['custom_rules']}"
             result.append(group_info)
@@ -39,11 +39,14 @@ class NotesManager:
                 return f"Group with name '{name}' already exists."
             raise
 
-    def remove_group(self, user_id: str, group_id: str) -> str:
+    def remove_group(self, user_id: str, group_id: int) -> str:
         """Remove a group and all its notes (cascade handled by DB)"""
-        # Note: In current implementation, we don't have a delete_group method
-        # Groups are removed when all notes are deleted due to cascade
-        return "Group removal not implemented yet"
+        print(f"    🔧 remove_group(user={user_id}, group={group_id})")
+        if self.repo.delete_group(user_id, group_id):
+            print(f"    ↳ Deleted group [{group_id}]")
+            return f"Deleted group [{group_id}]"
+        print(f"    ↳ Group not found")
+        return f"Group {group_id} not found."
 
     def list_notes(self, user_id: str, group_id: Optional[int] = None) -> str:
         """List all notes with IDs, optionally filtered by group"""
@@ -66,7 +69,7 @@ class NotesManager:
         for group in groups:
             if group['notes']:
                 for note in group['notes']:
-                    result.append(f"- [{note['id']}] {note['content']}")
+                    result.append(f"- [{note['id']}] {note['content']} (created: {note['created_at']}, updated: {note['updated_at']})")
                     total_notes += 1
 
         if not result:
@@ -92,6 +95,47 @@ class NotesManager:
         print(f"    ↳ Note not found")
         return f"Note {note_id} not found."
 
+    def search_notes(self, user_id: str, query: str) -> str:
+        """Search notes by keyword across all groups"""
+        print(f"    🔧 search_notes(user={user_id}, query=\"{query}\")")
+        groups = self.repo.get_all_groups_with_notes(user_id)
+
+        if not groups:
+            print(f"    ↳ No notes to search")
+            return "No notes found."
+
+        query_lower = query.lower()
+        results = []
+
+        for group in groups:
+            for note in group['notes']:
+                if query_lower in note['content'].lower():
+                    results.append(f"- [{note['id']}] {note['content']} (in {group['name']})")
+
+        if not results:
+            print(f"    ↳ No matches found")
+            return f"No notes matching '{query}'."
+
+        print(f"    ↳ Found {len(results)} matches")
+        return "\n".join(results)
+
+    def move_note(self, user_id: str, note_id: int, new_group_id: int) -> str:
+        """Move a note to a different group"""
+        print(f"    🔧 move_note(user={user_id}, note={note_id}, new_group={new_group_id})")
+        if self.repo.move_note(user_id, note_id, new_group_id):
+            print(f"    ↳ Moved note [{note_id}] to group [{new_group_id}]")
+            return f"Moved note [{note_id}] to group {new_group_id}"
+        print(f"    ↳ Note or group not found")
+        return f"Could not move note {note_id} to group {new_group_id}."
+
+    def get_groups_count(self, user_id: str) -> str:
+        """Get total number of groups"""
+        print(f"    🔧 get_groups_count(user={user_id})")
+        groups = self.repo.get_all_groups_with_notes(user_id)
+        count = len(groups)
+        print(f"    ↳ {count} groups")
+        return f"Total groups: {count}"
+
     def reset_user(self, user_id: str) -> None:
         """Clear all data for a user"""
         self.repo.delete_all_notes(user_id)
@@ -107,13 +151,16 @@ class NotesManager:
                 notes_dict[str(note['id'])] = {
                     'id': note['id'],
                     'content': note['content'],
-                    'created': note['created_at']
+                    'created': note['created_at'],
+                    'updated': note['updated_at']
                 }
             result[str(group['id'])] = {
                 'id': group['id'],
                 'name': group['name'],
                 'description': group['description'],
                 'custom_rules': group['custom_rules'],
+                'created': group['created_at'],
+                'updated': group['updated_at'],
                 'notes': notes_dict
             }
         return result

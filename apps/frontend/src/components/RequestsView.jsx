@@ -9,6 +9,7 @@ export default function RequestsView() {
   const [error, setError] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [expandedTraces, setExpandedTraces] = useState({});
+  const [copiedId, setCopiedId] = useState(null);
 
   const fetchRequests = async () => {
     try {
@@ -42,6 +43,16 @@ export default function RequestsView() {
       ...prev,
       [requestId]: !prev[requestId]
     }));
+  };
+
+  const copyRequestAsJson = (request) => {
+    const json = JSON.stringify(request, null, 2);
+    navigator.clipboard.writeText(json).then(() => {
+      setCopiedId(request.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
   };
 
   return (
@@ -92,9 +103,22 @@ export default function RequestsView() {
                   <span className="text-xs text-gray-500">
                     ID: {request.id}
                   </span>
-                  <span className="text-xs text-gray-500">
-                    {formatDate(request.created_at)}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => copyRequestAsJson(request)}
+                      className={`text-xs px-2 py-1 rounded transition-colors ${
+                        copiedId === request.id
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                      }`}
+                      title="Copy as JSON"
+                    >
+                      {copiedId === request.id ? '✓ Copied' : '📋 Copy JSON'}
+                    </button>
+                    <span className="text-xs text-gray-500">
+                      {formatDate(request.created_at)}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="mb-4">

@@ -32,7 +32,7 @@ def remove_group(group_id: str, config: RunnableConfig) -> str:
         group_id: The ID of the group to remove
     """
     user_id = config.get("configurable", {}).get("user_id", "default")
-    return notes_manager.remove_group(user_id, group_id)
+    return notes_manager.remove_group(user_id, int(group_id))
 
 @tool
 def list_notes(group_id: str = None, config: RunnableConfig = None) -> str:
@@ -79,6 +79,40 @@ def remove_note(note_id: str, config: RunnableConfig) -> str:
     user_id = config.get("configurable", {}).get("user_id", "default")
     return notes_manager.remove_note(user_id, int(note_id))
 
+@tool
+def search_notes(query: str, config: RunnableConfig) -> str:
+    """Search notes by keyword across all groups
+
+    Args:
+        query: The search term to find in notes
+    """
+    user_id = config.get("configurable", {}).get("user_id", "default")
+    return notes_manager.search_notes(user_id, query)
+
+@tool
+def move_note(note_id: str, new_group_id: str, config: RunnableConfig) -> str:
+    """Move a note to a different group
+
+    Args:
+        note_id: The ID of the note to move
+        new_group_id: The ID of the destination group
+    """
+    user_id = config.get("configurable", {}).get("user_id", "default")
+    return notes_manager.move_note(user_id, int(note_id), int(new_group_id))
+
+@tool
+def get_groups_count(config: RunnableConfig) -> str:
+    """Get the total number of groups in the notebook"""
+    user_id = config.get("configurable", {}).get("user_id", "default")
+    return notes_manager.get_groups_count(user_id)
+
+@tool
+def get_current_datetime(config: RunnableConfig) -> str:
+    """Get the current date and time"""
+    from datetime import datetime
+    now = datetime.now()
+    return f"Current date and time: {now.strftime('%Y-%m-%d %H:%M:%S')} ({now.strftime('%A, %B %d, %Y at %I:%M %p')})"
+
 
 class NotebookToolkit(BaseToolkit):
     """Toolkit for managing notes and groups in a notebook"""
@@ -92,5 +126,9 @@ class NotebookToolkit(BaseToolkit):
             list_notes,
             add_note,
             update_note,
-            remove_note
+            remove_note,
+            search_notes,
+            move_note,
+            get_groups_count,
+            get_current_datetime
         ]
