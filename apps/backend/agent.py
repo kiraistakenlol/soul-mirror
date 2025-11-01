@@ -174,14 +174,16 @@ Common sense rules:
 - Create group only when you have content for it (never empty groups)
 - Delete empty groups immediately
 - Update existing notes instead of duplicating
+- Delete completed/resolved items when user indicates they're done
 - Delete contradicted/outdated information
 - Consolidate related notes
 - Translate all content to English before storing
 
 Workflow:
 1. list_groups() to check current state
-2. Determine best action (create/update/delete/reorganize)
-3. Execute immediately (never ask for confirmation)
+2. list_notes(group_id) when you need to see what's in a specific group
+3. Determine best action (create/update/delete/reorganize)
+4. Execute immediately (never ask for confirmation)
 
 Be concise. Format responses: "Added 'X' to Y." or "Created 'Y' group."
 """)
