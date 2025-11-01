@@ -33,25 +33,25 @@ export default function ConversationHistory() {
     <div className="h-full flex flex-col">
       <div className="px-4 pb-3 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <span className="text-xl">💬</span>
-          <span className="text-sm text-gray-300 font-medium">Conversation ({count})</span>
+          <span className="text-2xl">💬</span>
+          <span className="text-lg text-gray-300 font-medium">Conversation ({count})</span>
         </div>
       </div>
 
       <div className="px-4 overflow-y-auto flex-1">
-        <div className="space-y-2">
+        <div className="space-y-3">
           {count === 0 ? (
-            <div className="text-gray-500 text-sm italic">No active conversation</div>
+            <div className="text-gray-500 text-base italic">No active conversation</div>
           ) : (
             history.map((msg, idx) => (
-              <div key={idx} className="bg-gray-800 rounded p-3 text-sm">
+              <div key={idx} className="bg-gray-800 rounded p-4 text-base">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl">
+                  <span className="text-2xl">
                     {msg.type === 'HumanMessage' ? '👤' :
                      msg.type === 'AIMessage' ? '🤖' :
                      '⚙️'}
                   </span>
-                  <span className={`font-semibold ${
+                  <span className={`font-semibold text-lg ${
                     msg.type === 'HumanMessage' ? 'text-blue-400' :
                     msg.type === 'AIMessage' ? 'text-green-400' :
                     'text-yellow-400'
@@ -61,7 +61,7 @@ export default function ConversationHistory() {
                      msg.type}
                   </span>
                 </div>
-                <div className="text-gray-300 whitespace-pre-wrap">
+                <div className="text-gray-300 whitespace-pre-wrap leading-relaxed">
                   {typeof msg.content === 'string'
                     ? msg.content
                     : JSON.stringify(msg.content, null, 2)

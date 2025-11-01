@@ -7,22 +7,24 @@ import ConversationHistory from './ConversationHistory';
 export default function MainView() {
   return (
     <div className="h-full flex overflow-hidden">
-      {/* Left column: Notes + Input */}
-      <div className="flex-1 flex flex-col border-r border-gray-800">
-        {/* Notes - takes remaining space */}
+      {/* Left column: Notes (50%) */}
+      <div className="w-1/2 flex flex-col border-r border-gray-800">
         <div className="flex-1 overflow-y-auto">
           <NotesList />
         </div>
+      </div>
 
-        {/* Input - fixed at bottom of notes column */}
+      {/* Right column: Conversation + Input (50%) */}
+      <div className="w-1/2 flex flex-col bg-gray-900">
+        {/* Conversation - takes remaining space */}
+        <div className="flex-1 overflow-y-auto py-4">
+          <ConversationHistory />
+        </div>
+
+        {/* Input - fixed at bottom */}
         <div className="flex-shrink-0">
           <ChatInput />
         </div>
-      </div>
-
-      {/* Right sidebar (30%) - Conversation History */}
-      <div className="w-[30%] flex flex-col bg-gray-900 py-4">
-        <ConversationHistory />
       </div>
     </div>
   );

@@ -63,14 +63,14 @@ export default function ChatInput() {
   }
 
   return (
-    <div className="bg-gray-950 border-t border-gray-800 p-3">
+    <div className="bg-gray-950 border-t border-gray-800 p-4">
         {error && (
-          <div className="mb-3 bg-red-900/20 border border-red-600 text-red-400 px-4 py-2 rounded-lg flex items-center gap-2">
-            <span className="text-lg">⚠️</span>
+          <div className="mb-3 bg-red-900/20 border border-red-600 text-red-400 px-4 py-3 rounded-lg flex items-center gap-2 text-base">
+            <span className="text-xl">⚠️</span>
             <span>{error}</span>
             <button
               onClick={() => setError(null)}
-              className="ml-auto text-red-400 hover:text-red-300"
+              className="ml-auto text-red-400 hover:text-red-300 text-lg"
             >
               ✕
             </button>
@@ -84,7 +84,7 @@ export default function ChatInput() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="💭 Type a thought, idea, or goal... (Enter = send, Shift+Enter = new line, Esc = clear)"
-              className="w-full bg-gray-900 text-gray-100 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none border border-gray-700"
+              className="w-full bg-gray-900 text-gray-100 rounded-lg px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none border border-gray-700"
               rows={3}
             />
           </div>
@@ -92,17 +92,17 @@ export default function ChatInput() {
           <button
             onClick={handleSubmit}
             disabled={!input.trim() || processing}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 text-base"
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 text-lg"
           >
             {processing ? (
               <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span>Processing...</span>
               </>
             ) : (
               <>
                 <span>Process</span>
-                <span className="text-lg">↵</span>
+                <span className="text-xl">↵</span>
               </>
             )}
           </button>
@@ -110,16 +110,16 @@ export default function ChatInput() {
           <button
             onClick={handleReset}
             disabled={resetting}
-            className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 text-base"
+            className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-5 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 text-lg"
             title="Reset conversation"
           >
             {resetting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               </>
             ) : (
               <>
-                <span className="text-lg">🔄</span>
+                <span className="text-xl">🔄</span>
                 <span>Reset</span>
               </>
             )}
