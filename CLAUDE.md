@@ -66,17 +66,18 @@ apps/backend
 **LangGraph Agent:**
 - Personal assistant using LangGraph state machine pattern
 - Uses notes as primary memory system organized in groups
-- Automatically considers context from notes before responding
-- Updates understanding through natural interaction patterns
+- Principle-based approach: owns note-taking decisions, organizes by semantic meaning, maintains cleanliness
+- No empty groups or archives - delete when no longer relevant
+- Automatically translates all content to English before storing
 - Maintains conversation history per user
 
 **Notes Tool:**
 - Group-based notes system for organized information
-- PostgreSQL storage with repository pattern
+- PostgreSQL storage with repository pattern and automatic timestamp tracking
 - Agent creates and manages groups to organize notes by topic
 - Groups have `description` (required) and `custom_rules` (optional) fields
 - Agent sees and follows custom_rules when managing notes in each group
-- Default user groups: Self-Improvement, Health & Lifestyle, Project Ideas, Work & Career, Language Learning, Relationships, Philosophy & Values, Location & Travel, Tasks & Reminders, Daily Reflections
+- Tools: list_groups, add_group, remove_group, list_notes, add_note, update_note, remove_note, search_notes, move_note, get_groups_count, get_current_datetime
 - Supports multi-user isolation via user_id
 - Initialize default groups via `/api/admin/create-default-note-groups` or Dev panel
 
@@ -113,10 +114,11 @@ apps/backend
 apps/backend/
 ├── main.py                    # FastAPI entry point
 ├── agent.py                   # LangChain personal assistant agent
-├── baseline.sql               # Database schema
+├── baseline.sql               # Database schema with timestamp triggers
 ├── default-note-groups.json   # Default note groups definitions
 ├── tools/
-│   └── notes.py               # Notes management tool
+│   ├── notes.py               # Notes management tool
+│   └── notebook_toolkit.py    # LangChain toolkit wrapper
 ├── repository/
 │   ├── notes.py               # PostgreSQL notes data layer
 │   └── requests.py            # PostgreSQL requests logging
@@ -191,6 +193,7 @@ cp .env.example .env
 
 PostgreSQL storage with schema management:
 - `baseline.sql` - Database schema (note_groups, notes, requests tables)
+- Automatic timestamp tracking: `created_at` and `updated_at` fields with triggers
 - Repository pattern in `repository/notes.py` and `repository/requests.py`
 - Manual schema reset via `/api/admin/database/reset`
 
@@ -215,9 +218,9 @@ apps/frontend/
 │   │   ├── MainView.jsx           # Main page layout
 │   │   ├── ToolsView.jsx          # Tools page
 │   │   ├── TestsView.jsx          # Tests page
-│   │   ├── RequestsView.jsx       # Request history browser
+│   │   ├── RequestsView.jsx       # Request history browser with copy JSON
 │   │   ├── DevView.jsx            # Developer admin panel
-│   │   ├── NotesList.jsx          # Notes with collapsible groups
+│   │   ├── NotesList.jsx          # Notes with collapsible groups and relative timestamps
 │   │   ├── ChatInput.jsx          # Input with process/reset and error display
 │   │   ├── ConversationHistory.jsx # Full conversation display
 │   │   ├── ResponseDisplay.jsx
@@ -226,6 +229,8 @@ apps/frontend/
 │   │   └── Tools.jsx
 │   ├── services/
 │   │   └── api.js                 # API client with improved error handling
+│   ├── utils/
+│   │   └── time.js                # Timestamp formatting utilities
 │   ├── App.jsx
 │   ├── main.jsx
 │   └── index.css
@@ -277,7 +282,8 @@ cp .env.example .env
 #### Features
 
 - Collapsible note groups (collapsed by default)
-- Shows custom_rules for groups when expanded
+- Collapsible custom_rules for groups (hidden by default)
+- Relative timestamps ("2m ago", "3h ago") with hover tooltips showing full dates
 - Full conversation history (no truncation)
 - Auto-refresh: notes (10s), status (30s), conversation (5s), requests (5s)
 - Keyboard shortcuts: Enter = submit, Shift+Enter = new line, Esc = clear
@@ -285,7 +291,7 @@ cp .env.example .env
 - Large fonts, emojis, generous spacing
 - Error display with dismissible alerts
 - Concurrent input (can type while processing)
-- Request history browser with auto-refresh
+- Request history browser with auto-refresh and copy as JSON
 - Dev panel for admin operations (create default note groups)
 
 ### Telegram Bot (Python)
