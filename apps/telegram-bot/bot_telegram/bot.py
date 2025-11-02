@@ -1,6 +1,7 @@
 """Telegram bot initialization and lifecycle"""
 import logging
 from typing import Optional
+from io import BytesIO
 from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, filters
 
@@ -53,3 +54,18 @@ class TelegramBot:
             raise RuntimeError("Telegram bot not initialized")
 
         return await self.app.bot.send_message(chat_id=chat_id, text=text)
+
+    async def send_audio(self, chat_id: str, audio_bytes: bytes, filename: str = "audio.mp3", caption: Optional[str] = None):
+        """Send an audio file to a Telegram channel/chat"""
+        if not self.app:
+            raise RuntimeError("Telegram bot not initialized")
+
+        audio_file = BytesIO(audio_bytes)
+        audio_file.name = filename
+
+        return await self.app.bot.send_audio(
+            chat_id=chat_id,
+            audio=audio_file,
+            caption=caption,
+            filename=filename
+        )

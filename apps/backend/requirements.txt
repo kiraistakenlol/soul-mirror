@@ -9,3 +9,4 @@ psycopg2-binary
 pytz
 icalendar==6.1.0
 recurring-ical-events==3.3.3
+elevenlabs

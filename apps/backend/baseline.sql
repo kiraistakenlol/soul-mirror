@@ -103,3 +103,24 @@ CREATE INDEX idx_calendar_events_responsibility_id ON calendar_events(responsibi
 -- Apply trigger to calendar_events
 CREATE TRIGGER update_calendar_events_updated_at BEFORE UPDATE ON calendar_events
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Files table - generic file storage with metadata
+CREATE TABLE files (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    file_type TEXT,  -- optional categorization (e.g., 'voiceover', 'recording', 'document')
+    content_type TEXT NOT NULL,  -- MIME type (e.g., 'audio/mpeg', 'image/png')
+    size_bytes INTEGER NOT NULL,
+    data BYTEA NOT NULL,
+    metadata JSONB DEFAULT '{}',  -- flexible storage for file-specific metadata
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_files_user_id ON files(user_id);
+CREATE INDEX idx_files_file_type ON files(file_type);
+
+-- Apply trigger to files
+CREATE TRIGGER update_files_updated_at BEFORE UPDATE ON files
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -1,6 +1,7 @@
 # FastAPI server for Soul Mirror backend
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import Optional
 import os
@@ -13,12 +14,15 @@ from agent import Agent
 from tools.notes import notes_manager
 from tools.memory import memory_manager
 from tools.responsibilities import responsibilities_manager
+from tools.tts import tts_manager
 from tools.notebook_toolkit import NotebookToolkit
 from tools.memory_toolkit import MemoryToolkit
 from tools.general_toolkit import GeneralToolkit
 from tools.responsibilities_toolkit import ResponsibilitiesToolkit
+from tools.tts_toolkit import TTSToolkit
 from repository.notes import NotesRepository
 from repository.requests import RequestsRepository
+from repository.files import FilesRepository
 from llm_trace_callback import LLMTraceCallback
 
 load_dotenv()
@@ -295,6 +299,92 @@ def get_calendar(user_id: str = "default"):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/files")
+def list_files(user_id: str = "default", file_type: Optional[str] = None):
+    """List files for user (optionally filtered by file_type)"""
+    try:
+        files_repo = FilesRepository()
+        files = files_repo.list_files(user_id, file_type)
+        return {
+            "user_id": user_id,
+            "file_type": file_type,
+            "count": len(files),
+            "files": files
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/files/{file_id}")
+def get_file(file_id: int, user_id: str = "default"):
+    """Download file by ID"""
+    try:
+        files_repo = FilesRepository()
+        file_data = files_repo.get_file(file_id, user_id)
+
+        if not file_data:
+            raise HTTPException(status_code=404, detail="File not found")
+
+        return Response(
+            content=bytes(file_data['data']),
+            media_type=file_data['content_type'],
+            headers={
+                "Content-Disposition": f"inline; filename=\"{file_data['filename']}\""
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/files/{file_id}")
+def delete_file(file_id: int, user_id: str = "default"):
+    """Delete file by ID"""
+    try:
+        files_repo = FilesRepository()
+        deleted = files_repo.delete_file(file_id, user_id)
+
+        if not deleted:
+            raise HTTPException(status_code=404, detail="File not found")
+
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "message": "File deleted"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class GenerateSpeechRequest(BaseModel):
+    text: str
+    voice_id: Optional[str] = None
+
+@app.post("/api/tts/generate")
+def generate_speech(request: GenerateSpeechRequest, user_id: str = "default"):
+    """Generate speech from text using ElevenLabs"""
+    try:
+        result = tts_manager.generate_speech(
+            text=request.text,
+            user_id=user_id,
+            voice_id=request.voice_id
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/tts/voices")
+def list_voices():
+    """List available ElevenLabs voices"""
+    try:
+        voices = tts_manager.list_voices()
+        return {
+            "count": len(voices),
+            "voices": voices
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/tools")
 def get_tools():
     """List available tools organized by toolkit"""
@@ -302,6 +392,7 @@ def get_tools():
     memory_toolkit = MemoryToolkit()
     general_toolkit = GeneralToolkit()
     responsibilities_toolkit = ResponsibilitiesToolkit()
+    tts_toolkit = TTSToolkit()
     from tools.calendar_toolkit import CalendarToolkit
     from tools.telegram_toolkit import TelegramToolkit
     calendar_toolkit = CalendarToolkit()
@@ -312,6 +403,7 @@ def get_tools():
     responsibilities_tools = responsibilities_toolkit.get_tools()
     calendar_tools = calendar_toolkit.get_tools()
     telegram_tools = telegram_toolkit.get_tools()
+    tts_tools = tts_toolkit.get_tools()
 
     def tool_to_dict(tool):
         """Convert tool to dict with name, description, and parameters"""
@@ -351,6 +443,10 @@ def get_tools():
             {
                 "name": "Telegram",
                 "tools": [tool_to_dict(tool) for tool in telegram_tools]
+            },
+            {
+                "name": "TTS",
+                "tools": [tool_to_dict(tool) for tool in tts_tools]
             },
             {
                 "name": "General",

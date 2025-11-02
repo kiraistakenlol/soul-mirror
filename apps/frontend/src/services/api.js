@@ -123,6 +123,22 @@ class ApiService {
   async getCalendar(userId = 'default') {
     return this.request(`/calendar?user_id=${userId}`);
   }
+
+  async getFiles(userId = 'default', fileType = null) {
+    const params = new URLSearchParams({ user_id: userId });
+    if (fileType) params.append('file_type', fileType);
+    return this.request(`/files?${params}`);
+  }
+
+  async deleteFile(fileId, userId = 'default') {
+    return this.request(`/files/${fileId}?user_id=${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  getFileUrl(fileId, userId = 'default') {
+    return `${API_BASE}/files/${fileId}?user_id=${userId}`;
+  }
 }
 
 export default new ApiService();

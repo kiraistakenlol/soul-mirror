@@ -202,8 +202,8 @@ All endpoints prefixed with `/api` and return JSON:
 #### Development Commands
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (IMPORTANT: use venv)
+./venv/bin/pip install -r requirements.txt
 
 # Run server (with hot reload) - runs automatically in background
 python main.py
@@ -214,6 +214,8 @@ uvicorn main:app --reload --port 8080
 # Or use dev script
 ./scripts/dev.sh
 ```
+
+**IMPORTANT:** Backend uses `venv` virtual environment. Always install packages with `./venv/bin/pip install <package>`, not global `pip install`. This issue comes up frequently when new dependencies are added.
 
 #### Configuration
 
