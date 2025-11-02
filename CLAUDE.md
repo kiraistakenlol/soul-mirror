@@ -11,11 +11,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Responsibilities system - agent's internal workflows and recurring tasks
 - Calendar system - scheduled events with iCalendar integration
 - Group-based notes organization with custom rules per group
-- AI agent with multiple toolkits (notebook, memory, calendar, responsibilities, telegram, general)
+- AI agent with multiple toolkits (notebook, memory, calendar, responsibilities, telegram, tts, general)
 - Multi-user support with data isolation
 - Conversation history per user (in-memory)
 - Request logging for debugging
-- Telegram bot integration for voice/text input and sending messages to channels
+- Telegram bot integration for voice/text input and sending text/audio to channels
+- TTS with ElevenLabs for generating speech from text
+- File storage system for managing audio and other files
 
 **What's Not Implemented Yet:**
 - Emergent organization patterns
@@ -67,7 +69,7 @@ apps/backend
 
 **LangGraph Agent:**
 - Personal assistant using LangGraph state machine pattern
-- Multiple toolkits: Notebook, Memory, Calendar, Responsibilities, Telegram, General
+- Multiple toolkits: Notebook, Memory, Calendar, Responsibilities, Telegram, TTS, General
 - Loads core memory into context for each request
 - Automatically translates all content to English before storing
 - Maintains conversation history per user
@@ -98,13 +100,28 @@ apps/backend
 - Tools: add_responsibility, list_responsibilities, update_responsibility, remove_responsibility
 
 **Telegram Tool:**
-- Send messages to user's Telegram channels
-- Tools: list_telegram_channels, send_telegram_message
+- Send text and audio to user's Telegram channels
+- Tools: list_telegram_channels, send_telegram_message, send_audio_to_telegram
 - Integrates with telegram-bot service API
 - Used for scheduled messages or on-demand posting
+- send_audio_to_telegram accepts file_id from TTS and optional caption
+
+**TTS Tool:**
+- Text-to-speech using ElevenLabs API
+- Tools: generate_speech, list_voices
+- Generates audio files stored in PostgreSQL files table
+- Returns file_id for use with send_audio_to_telegram
+- Supports multiple voices
 
 **General Tool:**
 - Utility functions: get_current_datetime
+
+**File Storage:**
+- Generic file storage system with metadata
+- PostgreSQL files table with binary data and JSONB metadata
+- Repository pattern in repository/files.py
+- Used for TTS audio files, can store any file type
+- Supports categorization via file_type field
 
 **Request Logging:**
 - Automatic logging of all user requests and agent responses
@@ -127,10 +144,10 @@ apps/backend
     └────────┬────────┘
              │
              ▼
-    ┌─────────────────────────────────────────┐
-    │  Toolkits: Notebook, Memory, Calendar,  │
-    │  Responsibilities, Telegram, General    │
-    └─────────────────────────────────────────┘
+    ┌───────────────────────────────────────────────┐
+    │  Toolkits: Notebook, Memory, Calendar,        │
+    │  Responsibilities, Telegram, TTS, General     │
+    └───────────────────────────────────────────────┘
 ```
 
 #### Directory Structure
@@ -147,18 +164,21 @@ apps/backend/
 │   ├── responsibilities.py       # Responsibilities management
 │   ├── calendar.py               # Calendar management
 │   ├── telegram.py               # Telegram integration
+│   ├── tts.py                    # Text-to-speech with ElevenLabs
 │   ├── notebook_toolkit.py       # Notebook toolkit wrapper
 │   ├── memory_toolkit.py         # Memory toolkit wrapper
 │   ├── general_toolkit.py        # General utilities toolkit
 │   ├── responsibilities_toolkit.py
 │   ├── calendar_toolkit.py
-│   └── telegram_toolkit.py
+│   ├── telegram_toolkit.py
+│   └── tts_toolkit.py
 ├── repository/
 │   ├── notes.py                  # PostgreSQL notes data layer
 │   ├── requests.py               # PostgreSQL requests logging
 │   ├── memory.py                 # PostgreSQL core memory data layer
 │   ├── responsibilities.py       # PostgreSQL responsibilities data layer
-│   └── calendar.py               # PostgreSQL calendar data layer
+│   ├── calendar.py               # PostgreSQL calendar data layer
+│   └── files.py                  # PostgreSQL files storage data layer
 ├── scripts/
 │   └── dev.sh                    # Development server script
 ├── requirements.txt              # Python dependencies
@@ -177,6 +197,7 @@ apps/backend/
 - psycopg2 (PostgreSQL driver)
 - postgresql (database)
 - icalendar (calendar events)
+- elevenlabs (TTS API)
 
 #### API Endpoints
 
@@ -191,6 +212,11 @@ All endpoints prefixed with `/api` and return JSON:
 - `DELETE /api/memory?user_id=id` - Clear core memory for user
 - `GET /api/responsibilities?user_id=id` - Get all responsibilities for user
 - `GET /api/calendar?user_id=id` - Get all calendar events for user
+- `GET /api/files?user_id=id&file_type=type` - List files (optionally filtered by type)
+- `GET /api/files/{file_id}?user_id=id` - Download file by ID
+- `DELETE /api/files/{file_id}?user_id=id` - Delete file by ID
+- `POST /api/tts/generate` - Generate speech from text (text, voice_id, user_id)
+- `GET /api/tts/voices` - List available ElevenLabs voices
 - `GET /api/reset?user_id=id` - Reset all notes for user
 - `GET /api/reset-conversation?user_id=id` - Reset conversation history
 - `GET /api/conversation-history?user_id=id` - Get current conversation history (debug)
@@ -227,6 +253,7 @@ Environment variables:
 - `PORT` - Server port (default: 8080)
 - `ENVIRONMENT` - Deployment environment (default: development)
 - `TELEGRAM_BOT_URL` - Telegram bot service URL (local: http://localhost:8082, docker: http://telegram-bot:8082)
+- `ELEVENLABS_API_KEY` - ElevenLabs API key for TTS
 
 Setup:
 ```bash
@@ -237,10 +264,11 @@ cp .env.example .env
 #### Database
 
 PostgreSQL storage with schema management:
-- `baseline.sql` - Database schema (note_groups, notes, requests, core_memory, responsibilities, calendar_events tables)
+- `baseline.sql` - Database schema (note_groups, notes, requests, core_memory, responsibilities, calendar_events, files tables)
 - Automatic timestamp tracking: `created_at` and `updated_at` fields with triggers
 - Repository pattern in `repository/*.py` files
 - Manual schema reset via `/api/admin/database/reset`
+- files table stores binary data with JSONB metadata
 
 ### Frontend (React/Vite)
 
@@ -268,6 +296,7 @@ apps/frontend/
 │   │   ├── MemoryView.jsx         # Core memory display and editing
 │   │   ├── ResponsibilitiesView.jsx # Responsibilities list
 │   │   ├── CalendarView.jsx       # Calendar events with links to responsibilities
+│   │   ├── FilesView.jsx          # Files browser with download/delete
 │   │   ├── NotesList.jsx          # Notes with collapsible groups and relative timestamps
 │   │   ├── ChatInput.jsx          # Input with process/reset and error display
 │   │   ├── ConversationHistory.jsx # Full conversation display
@@ -325,6 +354,7 @@ cp .env.example .env
 - Memory (core memory display)
 - Responsibilities (workflows list)
 - Calendar (scheduled events)
+- Files (browse/download/delete files)
 - Tools (available agent tools)
 - Tests (test runner interface)
 - Requests (browse request history)
@@ -427,7 +457,8 @@ cp .env.example .env
 - Single shared user (no per-chat user_id)
 
 **Outgoing (API Service):**
-- `POST /send_message` - Send message to channel (chat_id, message)
+- `POST /send_message` - Send text message to channel (chat_id, message)
+- `POST /send-audio` - Send audio file to channel (chat_id, audio_base64, filename, caption)
 - `GET /list_channels` - List available channels with chat_ids
 - Port 8082
 
