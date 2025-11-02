@@ -7,18 +7,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Soul Mirror** is currently a note-taking system with an AI agent that organizes your thoughts into categorized groups.
 
 **What Works Now:**
+- Core memory system - long-term understanding of user context
+- Responsibilities system - agent's internal workflows and recurring tasks
+- Calendar system - scheduled events with iCalendar integration
 - Group-based notes organization with custom rules per group
-- AI agent that processes natural language input and creates/manages notes
+- AI agent with multiple toolkits (notebook, memory, calendar, responsibilities, telegram, general)
 - Multi-user support with data isolation
 - Conversation history per user (in-memory)
 - Request logging for debugging
-- Telegram bot integration for voice and text input
+- Telegram bot integration for voice/text input and sending messages to channels
 
 **What's Not Implemented Yet:**
-- User profile building from notes
-- Learning personality, interests, preferences over time
-- Personalized responses based on understanding of who you are
 - Emergent organization patterns
+- Advanced learning from interaction patterns
 
 ## Long-term Vision
 
@@ -27,11 +28,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Future Core Approach:**
 Like a real human assistant with a notebook - remembers everything about you and organizes information naturally through experience. Goes beyond note-taking to build understanding through interaction patterns.
 
-**Future Key Capabilities:**
-- **Memory Management**: Notes as primary memory system (implemented)
-- **Natural Learning**: Automatically updates understanding of your personality, interests, preferences (not implemented)
-- **Contextual Intelligence**: References what it knows about you to provide personalized responses (not implemented)
-- **Emergent Organization**: Develops organizational systems over time rather than using pre-defined categories (not implemented)
+**Key Capabilities:**
+- **Memory Management**: Core memory for long-term context + notes for organized information (implemented)
+- **Task Management**: Responsibilities and calendar for scheduling and workflows (implemented)
+- **Natural Learning**: Automatically updates understanding through memory system (partially implemented)
+- **Contextual Intelligence**: References core memory for personalized responses (implemented)
+- **Emergent Organization**: Develops organizational systems over time (not implemented)
 
 ## Project Rules
 
@@ -65,27 +67,49 @@ apps/backend
 
 **LangGraph Agent:**
 - Personal assistant using LangGraph state machine pattern
-- Uses notes as primary memory system organized in groups
-- Principle-based approach: owns note-taking decisions, organizes by semantic meaning, maintains cleanliness
-- No empty groups or archives - delete when no longer relevant
+- Multiple toolkits: Notebook, Memory, Calendar, Responsibilities, Telegram, General
+- Loads core memory into context for each request
 - Automatically translates all content to English before storing
 - Maintains conversation history per user
 
-**Notes Tool:**
-- Group-based notes system for organized information
-- PostgreSQL storage with repository pattern and automatic timestamp tracking
-- Agent creates and manages groups to organize notes by topic
+**Notebook Tool:**
+- Group-based notes for organized information storage
+- PostgreSQL storage with repository pattern
 - Groups have `description` (required) and `custom_rules` (optional) fields
-- Agent sees and follows custom_rules when managing notes in each group
 - Tools: list_groups, add_group, remove_group, list_notes, add_note, update_note, remove_note, search_notes, move_note, get_groups_count, get_current_datetime
-- Supports multi-user isolation via user_id
-- Initialize default groups via `/api/admin/create-default-note-groups` or Dev panel
+
+**Memory Tool:**
+- Core memory for long-term understanding of user
+- Single text field per user storing important context, preferences, patterns
+- Tools: read_core_memory, write_core_memory, clear_core_memory
+- Agent updates memory with significant information
+
+**Calendar Tool:**
+- Scheduled events with iCalendar integration
+- One-time events (with title/description) or recurring events (linked to responsibilities)
+- Supports recurrence patterns (daily, weekly, etc.)
+- Tools: add_calendar_event, list_calendar_events, remove_calendar_event, get_upcoming_events
+- PostgreSQL storage with ical_data field
+
+**Responsibilities Tool:**
+- Agent's internal workflows and recurring tasks
+- Plain English description of what, when, how
+- Can be linked to calendar events for execution timing
+- Tools: add_responsibility, list_responsibilities, update_responsibility, remove_responsibility
+
+**Telegram Tool:**
+- Send messages to user's Telegram channels
+- Tools: list_telegram_channels, send_telegram_message
+- Integrates with telegram-bot service API
+- Used for scheduled messages or on-demand posting
+
+**General Tool:**
+- Utility functions: get_current_datetime
 
 **Request Logging:**
 - Automatic logging of all user requests and agent responses
 - Stored in PostgreSQL requests table
 - Browse history via Requests tab in frontend
-- Useful for debugging and understanding interaction patterns
 
 ##### System Flow
 
@@ -99,33 +123,46 @@ apps/backend
     ┌─────────────────┐
     │ Personal Agent  │
     │  (LangGraph)    │
+    │  + Core Memory  │
     └────────┬────────┘
              │
              ▼
-    ┌─────────────────┐
-    │   Notes Tool    │
-    │ (unified memory)│
-    └─────────────────┘
+    ┌─────────────────────────────────────────┐
+    │  Toolkits: Notebook, Memory, Calendar,  │
+    │  Responsibilities, Telegram, General    │
+    └─────────────────────────────────────────┘
 ```
 
 #### Directory Structure
 
 ```
 apps/backend/
-├── main.py                    # FastAPI entry point
-├── agent.py                   # LangChain personal assistant agent
-├── baseline.sql               # Database schema with timestamp triggers
-├── default-note-groups.json   # Default note groups definitions
+├── main.py                       # FastAPI entry point
+├── agent.py                      # LangChain personal assistant agent
+├── baseline.sql                  # Database schema with timestamp triggers
+├── default-note-groups.json      # Default note groups definitions
 ├── tools/
-│   ├── notes.py               # Notes management tool
-│   └── notebook_toolkit.py    # LangChain toolkit wrapper
+│   ├── notes.py                  # Notes management
+│   ├── memory.py                 # Core memory management
+│   ├── responsibilities.py       # Responsibilities management
+│   ├── calendar.py               # Calendar management
+│   ├── telegram.py               # Telegram integration
+│   ├── notebook_toolkit.py       # Notebook toolkit wrapper
+│   ├── memory_toolkit.py         # Memory toolkit wrapper
+│   ├── general_toolkit.py        # General utilities toolkit
+│   ├── responsibilities_toolkit.py
+│   ├── calendar_toolkit.py
+│   └── telegram_toolkit.py
 ├── repository/
-│   ├── notes.py               # PostgreSQL notes data layer
-│   └── requests.py            # PostgreSQL requests logging
+│   ├── notes.py                  # PostgreSQL notes data layer
+│   ├── requests.py               # PostgreSQL requests logging
+│   ├── memory.py                 # PostgreSQL core memory data layer
+│   ├── responsibilities.py       # PostgreSQL responsibilities data layer
+│   └── calendar.py               # PostgreSQL calendar data layer
 ├── scripts/
-│   └── dev.sh                 # Development server script
-├── requirements.txt           # Python dependencies
-└── .env                       # Environment configuration
+│   └── dev.sh                    # Development server script
+├── requirements.txt              # Python dependencies
+└── .env                          # Environment configuration
 ```
 
 #### Tech Stack
@@ -139,6 +176,7 @@ apps/backend/
 - pydantic (data validation)
 - psycopg2 (PostgreSQL driver)
 - postgresql (database)
+- icalendar (calendar events)
 
 #### API Endpoints
 
@@ -149,6 +187,10 @@ All endpoints prefixed with `/api` and return JSON:
 - `POST /api/process` - Process input (JSON body with input and user_id)
 - `POST /api/note-groups` - Create note group directly (name, description, custom_rules, user_id)
 - `GET /api/notes?user_id=id&group_id=id` - Get all groups with nested notes for user
+- `GET /api/memory?user_id=id` - Get core memory for user
+- `DELETE /api/memory?user_id=id` - Clear core memory for user
+- `GET /api/responsibilities?user_id=id` - Get all responsibilities for user
+- `GET /api/calendar?user_id=id` - Get all calendar events for user
 - `GET /api/reset?user_id=id` - Reset all notes for user
 - `GET /api/reset-conversation?user_id=id` - Reset conversation history
 - `GET /api/conversation-history?user_id=id` - Get current conversation history (debug)
@@ -182,6 +224,7 @@ Environment variables:
 - `OPENAI_API_KEY` - Required when LLM_PROVIDER=openai
 - `PORT` - Server port (default: 8080)
 - `ENVIRONMENT` - Deployment environment (default: development)
+- `TELEGRAM_BOT_URL` - Telegram bot service URL (local: http://localhost:8082, docker: http://telegram-bot:8082)
 
 Setup:
 ```bash
@@ -192,9 +235,9 @@ cp .env.example .env
 #### Database
 
 PostgreSQL storage with schema management:
-- `baseline.sql` - Database schema (note_groups, notes, requests tables)
+- `baseline.sql` - Database schema (note_groups, notes, requests, core_memory, responsibilities, calendar_events tables)
 - Automatic timestamp tracking: `created_at` and `updated_at` fields with triggers
-- Repository pattern in `repository/notes.py` and `repository/requests.py`
+- Repository pattern in `repository/*.py` files
 - Manual schema reset via `/api/admin/database/reset`
 
 ### Frontend (React/Vite)
@@ -220,6 +263,9 @@ apps/frontend/
 │   │   ├── TestsView.jsx          # Tests page
 │   │   ├── RequestsView.jsx       # Request history browser with copy JSON
 │   │   ├── DevView.jsx            # Developer admin panel
+│   │   ├── MemoryView.jsx         # Core memory display and editing
+│   │   ├── ResponsibilitiesView.jsx # Responsibilities list
+│   │   ├── CalendarView.jsx       # Calendar events with links to responsibilities
 │   │   ├── NotesList.jsx          # Notes with collapsible groups and relative timestamps
 │   │   ├── ChatInput.jsx          # Input with process/reset and error display
 │   │   ├── ConversationHistory.jsx # Full conversation display
@@ -274,6 +320,9 @@ cp .env.example .env
 
 **Pages:**
 - Soul Mirror (main interaction)
+- Memory (core memory display)
+- Responsibilities (workflows list)
+- Calendar (scheduled events)
 - Tools (available agent tools)
 - Tests (test runner interface)
 - Requests (browse request history)
@@ -300,30 +349,32 @@ apps/telegram-bot
 
 #### Purpose
 
-Telegram bot that forwards text and voice messages to Soul Mirror backend, enabling note-taking through Telegram channels.
+Telegram bot that forwards text and voice messages to Soul Mirror backend AND provides API for sending messages to channels. Enables bidirectional Telegram integration.
 
 #### Architecture
 
 ```
-Telegram Channel
-    │
-    ▼
-Telegram Bot
-    │
-    ├─→ Voice messages → OpenAI Whisper (transcribe)
-    │                          │
-    │                          ▼
-    └─→ Text messages ────→ Backend /api/process
-                              │
-                              ▼
-                       Soul Mirror Agent
+Telegram Channel ←───────────────┐
+    │                            │
+    ▼                            │
+Telegram Bot (port 8082)         │
+    │                            │
+    ├─→ Incoming:                │ Outgoing:
+    │   Voice → Whisper          │ POST /send_message
+    │   Text → Backend           │ GET /list_channels
+    │                            │
+    └─→ Backend /api/process ────┘
+           │
+           ▼
+    Soul Mirror Agent
+    (uses telegram toolkit)
 ```
 
 #### Directory Structure
 
 ```
 apps/telegram-bot/
-├── main.py              # Bot logic with text/voice handlers
+├── main.py              # Bot logic with text/voice handlers + FastAPI service
 ├── requirements.txt     # Python dependencies
 ├── Dockerfile           # Container image
 ├── scripts/
@@ -336,6 +387,7 @@ apps/telegram-bot/
 
 - python (3.9+)
 - python-telegram-bot (bot framework)
+- fastapi (API service for sending messages)
 - httpx (HTTP client)
 - openai (Whisper API for voice transcription)
 
@@ -364,12 +416,18 @@ cp .env.example .env
 
 #### Features
 
+**Incoming (Bot → Backend):**
 - Text message forwarding to Soul Mirror
 - Voice message transcription using OpenAI Whisper
 - Channel post support (bot as channel admin)
 - Direct message support
 - Replies include transcription for voice messages
 - Single shared user (no per-chat user_id)
+
+**Outgoing (API Service):**
+- `POST /send_message` - Send message to channel (chat_id, message)
+- `GET /list_channels` - List available channels with chat_ids
+- Port 8082
 
 #### Setup in Telegram
 
