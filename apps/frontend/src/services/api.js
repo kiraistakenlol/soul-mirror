@@ -119,6 +119,10 @@ class ApiService {
   async getResponsibilities(userId = 'default') {
     return this.request(`/responsibilities?user_id=${userId}`);
   }
+
+  async getCalendar(userId = 'default') {
+    return this.request(`/calendar?user_id=${userId}`);
+  }
 }
 
 export default new ApiService();

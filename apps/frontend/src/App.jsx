@@ -10,11 +10,13 @@ import DevView from './components/DevView';
 import RequestsView from './components/RequestsView';
 import MemoryView from './components/MemoryView';
 import ResponsibilitiesView from './components/ResponsibilitiesView';
+import CalendarView from './components/CalendarView';
 
 const TABS = [
   { id: 'main', label: 'Soul Mirror', icon: '🧠' },
   { id: 'memory', label: 'Memory', icon: '💭' },
   { id: 'responsibilities', label: 'Responsibilities', icon: '📋' },
+  { id: 'calendar', label: 'Calendar', icon: '📅' },
   { id: 'tools', label: 'Tools', icon: '🛠️' },
   { id: 'tests', label: 'Tests', icon: '🧪' },
   { id: 'requests', label: 'Requests', icon: '📝' },
@@ -33,6 +35,7 @@ export default function App() {
         {activeTab === 'main' && <MainView />}
         {activeTab === 'memory' && <MemoryView />}
         {activeTab === 'responsibilities' && <ResponsibilitiesView />}
+        {activeTab === 'calendar' && <CalendarView />}
         {activeTab === 'tools' && <ToolsView />}
         {activeTab === 'tests' && <TestsView />}
         {activeTab === 'requests' && <RequestsView />}
