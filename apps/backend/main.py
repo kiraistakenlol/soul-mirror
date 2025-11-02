@@ -279,6 +279,21 @@ def get_responsibilities(user_id: str = "default"):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/calendar")
+def get_calendar(user_id: str = "default"):
+    """Get all calendar events"""
+    try:
+        from repository.calendar import CalendarRepository
+        repo = CalendarRepository()
+        events = repo.get_all_events(user_id)
+        return {
+            "user_id": user_id,
+            "count": len(events),
+            "events": events
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/tools")
 def get_tools():
@@ -287,10 +302,13 @@ def get_tools():
     memory_toolkit = MemoryToolkit()
     general_toolkit = GeneralToolkit()
     responsibilities_toolkit = ResponsibilitiesToolkit()
+    from tools.calendar_toolkit import CalendarToolkit
+    calendar_toolkit = CalendarToolkit()
     notebook_tools = notebook_toolkit.get_tools()
     memory_tools = memory_toolkit.get_tools()
     general_tools = general_toolkit.get_tools()
     responsibilities_tools = responsibilities_toolkit.get_tools()
+    calendar_tools = calendar_toolkit.get_tools()
 
     def tool_to_dict(tool):
         """Convert tool to dict with name, description, and parameters"""
@@ -322,6 +340,10 @@ def get_tools():
             {
                 "name": "Responsibilities",
                 "tools": [tool_to_dict(tool) for tool in responsibilities_tools]
+            },
+            {
+                "name": "Calendar",
+                "tools": [tool_to_dict(tool) for tool in calendar_tools]
             },
             {
                 "name": "General",

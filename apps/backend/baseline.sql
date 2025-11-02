@@ -84,3 +84,22 @@ CREATE INDEX idx_responsibilities_user_id ON responsibilities(user_id);
 -- Apply trigger to responsibilities
 CREATE TRIGGER update_responsibilities_updated_at BEFORE UPDATE ON responsibilities
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Calendar events table - stores scheduled events with icalendar data
+CREATE TABLE calendar_events (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    responsibility_id INTEGER REFERENCES responsibilities(id) ON DELETE CASCADE,  -- nullable for one-time events
+    title TEXT,  -- event title (used when no responsibility)
+    description TEXT,  -- plain text description (used when no responsibility)
+    ical_data TEXT NOT NULL,  -- serialized iCalendar VEVENT
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_calendar_events_user_id ON calendar_events(user_id);
+CREATE INDEX idx_calendar_events_responsibility_id ON calendar_events(responsibility_id);
+
+-- Apply trigger to calendar_events
+CREATE TRIGGER update_calendar_events_updated_at BEFORE UPDATE ON calendar_events
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

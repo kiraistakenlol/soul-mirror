@@ -13,6 +13,7 @@ from tools.notebook_toolkit import NotebookToolkit
 from tools.memory_toolkit import MemoryToolkit
 from tools.general_toolkit import GeneralToolkit
 from tools.responsibilities_toolkit import ResponsibilitiesToolkit
+from tools.calendar_toolkit import CalendarToolkit
 from tools.memory import memory_manager
 
 load_dotenv()
@@ -22,8 +23,10 @@ notebook_toolkit = NotebookToolkit()
 memory_toolkit = MemoryToolkit()
 general_toolkit = GeneralToolkit()
 responsibilities_toolkit = ResponsibilitiesToolkit()
+calendar_toolkit = CalendarToolkit()
 tools = (notebook_toolkit.get_tools() + memory_toolkit.get_tools() +
-         general_toolkit.get_tools() + responsibilities_toolkit.get_tools())
+         general_toolkit.get_tools() + responsibilities_toolkit.get_tools() +
+         calendar_toolkit.get_tools())
 
 class Agent:
     def __init__(self):
@@ -209,6 +212,15 @@ Responsibilities management:
 - Store them as plain English descriptions with all details (what, when, how)
 - Delete responsibilities when they're no longer needed
 - Check responsibilities regularly to see what you should be doing
+
+Calendar management:
+- Use calendar to schedule tasks - both recurring and one-time
+- For recurring tasks: create responsibility first, then schedule it
+  Example: add_responsibility(...) → add_calendar_event(scheduled_time="YYYY-MM-DD HH:MM", recurrence="daily", responsibility_id=X)
+- For one-time tasks: just schedule with description (no responsibility needed)
+  Example: add_calendar_event(scheduled_time="YYYY-MM-DD HH:MM", description="Send reminder about X")
+- Recurrence options: 'daily', 'weekly', 'monthly', 'yearly', or None for one-time
+- Delete calendar events when no longer needed
 
 Workflow:
 1. list_groups() to check current state
