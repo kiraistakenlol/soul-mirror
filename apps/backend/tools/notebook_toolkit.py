@@ -106,13 +106,6 @@ def get_groups_count(config: RunnableConfig) -> str:
     user_id = config.get("configurable", {}).get("user_id", "default")
     return notes_manager.get_groups_count(user_id)
 
-@tool
-def get_current_datetime(config: RunnableConfig) -> str:
-    """Get the current date and time"""
-    from datetime import datetime
-    now = datetime.now()
-    return f"Current date and time: {now.strftime('%Y-%m-%d %H:%M:%S')} ({now.strftime('%A, %B %d, %Y at %I:%M %p')})"
-
 
 class NotebookToolkit(BaseToolkit):
     """Toolkit for managing notes and groups in a notebook"""
@@ -129,6 +122,5 @@ class NotebookToolkit(BaseToolkit):
             remove_note,
             search_notes,
             move_note,
-            get_groups_count,
-            get_current_datetime
+            get_groups_count
         ]

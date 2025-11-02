@@ -10,12 +10,17 @@ from dotenv import load_dotenv
 
 from tools.notes import notes_manager
 from tools.notebook_toolkit import NotebookToolkit
+from tools.memory_toolkit import MemoryToolkit
+from tools.general_toolkit import GeneralToolkit
+from tools.memory import memory_manager
 
 load_dotenv()
 
-# Initialize toolkit and get tools
+# Initialize toolkits and get tools
 notebook_toolkit = NotebookToolkit()
-tools = notebook_toolkit.get_tools()
+memory_toolkit = MemoryToolkit()
+general_toolkit = GeneralToolkit()
+tools = notebook_toolkit.get_tools() + memory_toolkit.get_tools() + general_toolkit.get_tools()
 
 class Agent:
     def __init__(self):
@@ -153,11 +158,20 @@ class Agent:
         """Process user input through the agent"""
         print(f"🚀 Starting agent flow for user={user_id}")
 
+        # Load core memory for this user
+        core_memory = memory_manager.get_core_memory(user_id)
+        if core_memory:
+            print(f"  🧠 Core memory loaded: {core_memory[:100]}...")
+            memory_context = f"\n\nCore Memory (what you remember):\n{core_memory}\n"
+        else:
+            print(f"  🧠 No core memory yet")
+            memory_context = "\n\nCore Memory: Empty (nothing remembered yet)\n"
+
         # System prompt for the personal assistant
-        system_msg = SystemMessage(content="""You are a personal assistant with a notebook.
+        system_msg = SystemMessage(content=f"""You are a personal assistant with a notebook and memory.
 
 Your responsibility: manage the notebook - create/update/delete notes and organize them into groups.
-
+{memory_context}
 Principles:
 1. Own note-taking - decide what's worth noting
 2. Organize by semantic meaning
@@ -178,6 +192,12 @@ Common sense rules:
 - Delete contradicted/outdated information
 - Consolidate related notes
 - Translate all content to English before storing
+
+Memory management:
+- Core memory stores important information you should always remember (about user, context, patterns, anything significant)
+- Use update_core_memory tool with COMPLETE new content (read existing memory, incorporate new info, write full updated version)
+- Update memory when: learning about user, their preferences, habits, context, or any important information worth remembering long-term
+- Keep memory concise but comprehensive
 
 Workflow:
 1. list_groups() to check current state

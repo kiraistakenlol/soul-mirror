@@ -11,7 +11,10 @@ from pathlib import Path
 
 from agent import Agent
 from tools.notes import notes_manager
+from tools.memory import memory_manager
 from tools.notebook_toolkit import NotebookToolkit
+from tools.memory_toolkit import MemoryToolkit
+from tools.general_toolkit import GeneralToolkit
 from repository.notes import NotesRepository
 from repository.requests import RequestsRepository
 from llm_trace_callback import LLMTraceCallback
@@ -233,12 +236,42 @@ def get_requests(user_id: str = "default", limit: int = 100):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/memory")
+def get_memory(user_id: str = "default"):
+    """Get core memory"""
+    try:
+        memory = memory_manager.get_core_memory(user_id)
+        return {
+            "user_id": user_id,
+            "content": memory or "",
+            "exists": bool(memory)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/memory")
+def clear_memory(user_id: str = "default"):
+    """Clear all core memory"""
+    try:
+        result = memory_manager.clear_core_memory(user_id)
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "message": f"Memory cleared for {user_id}" if result else f"No memory to clear for {user_id}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/tools")
 def get_tools():
     """List available tools organized by toolkit"""
     notebook_toolkit = NotebookToolkit()
+    memory_toolkit = MemoryToolkit()
+    general_toolkit = GeneralToolkit()
     notebook_tools = notebook_toolkit.get_tools()
+    memory_tools = memory_toolkit.get_tools()
+    general_tools = general_toolkit.get_tools()
 
     def tool_to_dict(tool):
         """Convert tool to dict with name, description, and parameters"""
@@ -262,6 +295,14 @@ def get_tools():
             {
                 "name": "Notebook",
                 "tools": [tool_to_dict(tool) for tool in notebook_tools]
+            },
+            {
+                "name": "Memory",
+                "tools": [tool_to_dict(tool) for tool in memory_tools]
+            },
+            {
+                "name": "General",
+                "tools": [tool_to_dict(tool) for tool in general_tools]
             }
         ]
     }

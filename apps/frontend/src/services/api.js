@@ -105,6 +105,16 @@ class ApiService {
   async getRequests(limit = 100) {
     return this.request(`/requests?limit=${limit}`);
   }
+
+  async getMemory(userId = 'default') {
+    return this.request(`/memory?user_id=${userId}`);
+  }
+
+  async clearMemory(userId = 'default') {
+    return this.request(`/memory?user_id=${userId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export default new ApiService();

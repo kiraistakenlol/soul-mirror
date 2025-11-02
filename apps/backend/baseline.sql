@@ -53,3 +53,18 @@ CREATE TABLE requests (
 
 CREATE INDEX idx_requests_user_id ON requests(user_id);
 CREATE INDEX idx_requests_created_at ON requests(created_at);
+
+-- Core memory table - stores agent's long-term understanding of each user
+CREATE TABLE core_memory (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL UNIQUE,
+    content TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_core_memory_user_id ON core_memory(user_id);
+
+-- Apply trigger to core_memory
+CREATE TRIGGER update_core_memory_updated_at BEFORE UPDATE ON core_memory
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
