@@ -303,12 +303,15 @@ def get_tools():
     general_toolkit = GeneralToolkit()
     responsibilities_toolkit = ResponsibilitiesToolkit()
     from tools.calendar_toolkit import CalendarToolkit
+    from tools.telegram_toolkit import TelegramToolkit
     calendar_toolkit = CalendarToolkit()
+    telegram_toolkit = TelegramToolkit()
     notebook_tools = notebook_toolkit.get_tools()
     memory_tools = memory_toolkit.get_tools()
     general_tools = general_toolkit.get_tools()
     responsibilities_tools = responsibilities_toolkit.get_tools()
     calendar_tools = calendar_toolkit.get_tools()
+    telegram_tools = telegram_toolkit.get_tools()
 
     def tool_to_dict(tool):
         """Convert tool to dict with name, description, and parameters"""
@@ -344,6 +347,10 @@ def get_tools():
             {
                 "name": "Calendar",
                 "tools": [tool_to_dict(tool) for tool in calendar_tools]
+            },
+            {
+                "name": "Telegram",
+                "tools": [tool_to_dict(tool) for tool in telegram_tools]
             },
             {
                 "name": "General",

@@ -14,6 +14,7 @@ from tools.memory_toolkit import MemoryToolkit
 from tools.general_toolkit import GeneralToolkit
 from tools.responsibilities_toolkit import ResponsibilitiesToolkit
 from tools.calendar_toolkit import CalendarToolkit
+from tools.telegram_toolkit import TelegramToolkit
 from tools.memory import memory_manager
 
 load_dotenv()
@@ -24,9 +25,10 @@ memory_toolkit = MemoryToolkit()
 general_toolkit = GeneralToolkit()
 responsibilities_toolkit = ResponsibilitiesToolkit()
 calendar_toolkit = CalendarToolkit()
+telegram_toolkit = TelegramToolkit()
 tools = (notebook_toolkit.get_tools() + memory_toolkit.get_tools() +
          general_toolkit.get_tools() + responsibilities_toolkit.get_tools() +
-         calendar_toolkit.get_tools())
+         calendar_toolkit.get_tools() + telegram_toolkit.get_tools())
 
 class Agent:
     def __init__(self):
@@ -212,11 +214,21 @@ Your tools and their purposes:
    Don't: Use for simple reminders, transient tasks, or info that doesn't need organization
    Always: Translate content to English before storing
 
+5. TELEGRAM - Send messages to Telegram channels
+   Purpose: Post messages to user's Telegram channels
+   When to use: User wants to send content to their Telegram channels, or when executing scheduled responsibilities that involve Telegram
+   Tools:
+   - list_telegram_channels() - See available channels (check this first)
+   - send_telegram_message(chat_id, message) - Send message to a channel
+   Examples: "Send 'Hello' to my Spanish channel", "Post this quote to my motivation channel"
+   Note: User must tell you which channel to use, or you must list channels first to know the chat_id
+
 When to use each tool:
 - "Remind me tomorrow" → Calendar only
-- "Send me daily quotes at 7am" → Responsibility + Calendar
+- "Send me daily quotes at 7am" → Responsibility + Calendar + Telegram
 - "Remember I prefer mornings" → Core Memory
 - "Save this recipe" → Notebook
+- "Post this to my channel" → Telegram (list channels first if you don't know the chat_id)
 
 Be direct and minimal. Only use tools when they serve the user's actual request.""")
 
