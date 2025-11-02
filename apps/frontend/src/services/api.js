@@ -115,6 +115,10 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  async getResponsibilities(userId = 'default') {
+    return this.request(`/responsibilities?user_id=${userId}`);
+  }
 }
 
 export default new ApiService();

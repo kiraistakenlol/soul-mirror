@@ -9,10 +9,12 @@ import TestsView from './components/TestsView';
 import DevView from './components/DevView';
 import RequestsView from './components/RequestsView';
 import MemoryView from './components/MemoryView';
+import ResponsibilitiesView from './components/ResponsibilitiesView';
 
 const TABS = [
   { id: 'main', label: 'Soul Mirror', icon: '🧠' },
   { id: 'memory', label: 'Memory', icon: '💭' },
+  { id: 'responsibilities', label: 'Responsibilities', icon: '📋' },
   { id: 'tools', label: 'Tools', icon: '🛠️' },
   { id: 'tests', label: 'Tests', icon: '🧪' },
   { id: 'requests', label: 'Requests', icon: '📝' },
@@ -30,6 +32,7 @@ export default function App() {
       <div className="flex-1 overflow-hidden">
         {activeTab === 'main' && <MainView />}
         {activeTab === 'memory' && <MemoryView />}
+        {activeTab === 'responsibilities' && <ResponsibilitiesView />}
         {activeTab === 'tools' && <ToolsView />}
         {activeTab === 'tests' && <TestsView />}
         {activeTab === 'requests' && <RequestsView />}

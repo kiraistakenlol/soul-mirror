@@ -68,3 +68,19 @@ CREATE INDEX idx_core_memory_user_id ON core_memory(user_id);
 -- Apply trigger to core_memory
 CREATE TRIGGER update_core_memory_updated_at BEFORE UPDATE ON core_memory
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Responsibilities table - agent's internal workflows and tasks
+CREATE TABLE responsibilities (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_responsibilities_user_id ON responsibilities(user_id);
+
+-- Apply trigger to responsibilities
+CREATE TRIGGER update_responsibilities_updated_at BEFORE UPDATE ON responsibilities
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

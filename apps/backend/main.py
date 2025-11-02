@@ -12,9 +12,11 @@ from pathlib import Path
 from agent import Agent
 from tools.notes import notes_manager
 from tools.memory import memory_manager
+from tools.responsibilities import responsibilities_manager
 from tools.notebook_toolkit import NotebookToolkit
 from tools.memory_toolkit import MemoryToolkit
 from tools.general_toolkit import GeneralToolkit
+from tools.responsibilities_toolkit import ResponsibilitiesToolkit
 from repository.notes import NotesRepository
 from repository.requests import RequestsRepository
 from llm_trace_callback import LLMTraceCallback
@@ -262,6 +264,21 @@ def clear_memory(user_id: str = "default"):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/responsibilities")
+def get_responsibilities(user_id: str = "default"):
+    """Get all responsibilities"""
+    try:
+        from repository.responsibilities import ResponsibilitiesRepository
+        repo = ResponsibilitiesRepository()
+        responsibilities = repo.get_all_responsibilities(user_id)
+        return {
+            "user_id": user_id,
+            "count": len(responsibilities),
+            "responsibilities": responsibilities
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/tools")
 def get_tools():
@@ -269,9 +286,11 @@ def get_tools():
     notebook_toolkit = NotebookToolkit()
     memory_toolkit = MemoryToolkit()
     general_toolkit = GeneralToolkit()
+    responsibilities_toolkit = ResponsibilitiesToolkit()
     notebook_tools = notebook_toolkit.get_tools()
     memory_tools = memory_toolkit.get_tools()
     general_tools = general_toolkit.get_tools()
+    responsibilities_tools = responsibilities_toolkit.get_tools()
 
     def tool_to_dict(tool):
         """Convert tool to dict with name, description, and parameters"""
@@ -299,6 +318,10 @@ def get_tools():
             {
                 "name": "Memory",
                 "tools": [tool_to_dict(tool) for tool in memory_tools]
+            },
+            {
+                "name": "Responsibilities",
+                "tools": [tool_to_dict(tool) for tool in responsibilities_tools]
             },
             {
                 "name": "General",

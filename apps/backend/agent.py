@@ -12,6 +12,7 @@ from tools.notes import notes_manager
 from tools.notebook_toolkit import NotebookToolkit
 from tools.memory_toolkit import MemoryToolkit
 from tools.general_toolkit import GeneralToolkit
+from tools.responsibilities_toolkit import ResponsibilitiesToolkit
 from tools.memory import memory_manager
 
 load_dotenv()
@@ -20,7 +21,9 @@ load_dotenv()
 notebook_toolkit = NotebookToolkit()
 memory_toolkit = MemoryToolkit()
 general_toolkit = GeneralToolkit()
-tools = notebook_toolkit.get_tools() + memory_toolkit.get_tools() + general_toolkit.get_tools()
+responsibilities_toolkit = ResponsibilitiesToolkit()
+tools = (notebook_toolkit.get_tools() + memory_toolkit.get_tools() +
+         general_toolkit.get_tools() + responsibilities_toolkit.get_tools())
 
 class Agent:
     def __init__(self):
@@ -198,6 +201,14 @@ Memory management:
 - Use update_core_memory tool with COMPLETE new content (read existing memory, incorporate new info, write full updated version)
 - Update memory when: learning about user, their preferences, habits, context, or any important information worth remembering long-term
 - Keep memory concise but comprehensive
+
+Responsibilities management:
+- Use responsibilities to track your ongoing duties (workflows, recurring tasks, scheduled actions)
+- When user asks you to do something regularly or automatically, create a responsibility
+- Examples: "daily meditation texts at 7am", "weekly summary", "remind about X every day"
+- Store them as plain English descriptions with all details (what, when, how)
+- Delete responsibilities when they're no longer needed
+- Check responsibilities regularly to see what you should be doing
 
 Workflow:
 1. list_groups() to check current state
