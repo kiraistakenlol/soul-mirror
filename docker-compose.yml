@@ -24,7 +24,6 @@ services:
       - TELEGRAM_BOT_URL=http://telegram-bot:8082
     depends_on:
       - postgres
-      - telegram-bot
     restart: unless-stopped
 
   frontend:
